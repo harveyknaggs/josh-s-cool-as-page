@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Josh's Job Scheduler & Life Planner</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --surface2: #334155;
+      --border: #475569;
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-hover: #7dd3fc;
+      --green: #4ade80;
+      --yellow: #facc15;
+      --red: #f87171;
+      --purple: #c084fc;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 1.25rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+
+    header h1 span { color: var(--accent); }
+
+    .header-date {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .app {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 768px) {
+      .app { grid-template-columns: 1fr; }
+    }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+    }
+
+    .panel-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .panel-title .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    /* Form styles */
+    .form-row {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .form-row.stack {
+      flex-direction: column;
+    }
+
+    input, select, textarea {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      padding: 0.5rem 0.75rem;
+      font-size: 0.875rem;
+      font-family: inherit;
+      width: 100%;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--accent);
+    }
+
+    textarea { resize: vertical; min-height: 60px; }
+
+    label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 0.25rem;
+      display: block;
+    }
+
+    button {
+      background: var(--accent);
+      color: var(--bg);
+      border: none;
+      border-radius: 8px;
+      padding: 0.5rem 1rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+      white-space: nowrap;
+    }
+
+    button:hover { background: var(--accent-hover); }
+
+    button.secondary {
+      background: var(--surface2);
+      color: var(--text);
+    }
+
+    button.secondary:hover { background: var(--border); }
+
+    button.danger {
+      background: transparent;
+      color: var(--red);
+      padding: 0.25rem 0.5rem;
+      font-size: 0.75rem;
+    }
+
+    button.danger:hover { background: rgba(248,113,113,0.1); }
+
+    /* Job list */
+    .job-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .job-item {
+      background: var(--surface2);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      transition: background 0.15s;
+    }
+
+    .job-item:hover { background: var(--border); }
+
+    .job-check {
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      min-width: 20px;
+      border: 2px solid var(--border);
+      border-radius: 50%;
+      cursor: pointer;
+      margin-top: 2px;
+      transition: all 0.15s;
+    }
+
+    .job-check:checked {
+      background: var(--green);
+      border-color: var(--green);
+    }
+
+    .job-info { flex: 1; min-width: 0; }
+
+    .job-name {
+      font-weight: 600;
+      font-size: 0.9rem;
+      word-break: break-word;
+    }
+
+    .job-meta {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.25rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .job-item.done .job-name {
+      text-decoration: line-through;
+      opacity: 0.5;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 0.1rem 0.5rem;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      font-weight: 600;
+    }
+
+    .badge.high { background: rgba(248,113,113,0.2); color: var(--red); }
+    .badge.medium { background: rgba(250,204,21,0.2); color: var(--yellow); }
+    .badge.low { background: rgba(74,222,128,0.2); color: var(--green); }
+
+    .badge.work { background: rgba(56,189,248,0.15); color: var(--accent); }
+    .badge.personal { background: rgba(192,132,252,0.15); color: var(--purple); }
+    .badge.health { background: rgba(74,222,128,0.15); color: var(--green); }
+    .badge.finance { background: rgba(250,204,21,0.15); color: var(--yellow); }
+
+    .job-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    /* Calendar view */
+    .week-view {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 0.5rem;
+    }
+
+    .day-col {
+      text-align: center;
+    }
+
+    .day-label {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-bottom: 0.25rem;
+    }
+
+    .day-num {
+      font-size: 1.1rem;
+      font-weight: 700;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 0.5rem;
+      border-radius: 50%;
+    }
+
+    .day-num.today {
+      background: var(--accent);
+      color: var(--bg);
+    }
+
+    .day-tasks {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .day-task {
+      font-size: 0.65rem;
+      background: var(--surface2);
+      border-radius: 4px;
+      padding: 0.2rem 0.35rem;
+      text-align: left;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      border-left: 3px solid var(--accent);
+    }
+
+    .day-task.high { border-left-color: var(--red); }
+    .day-task.medium { border-left-color: var(--yellow); }
+    .day-task.low { border-left-color: var(--green); }
+
+    /* Goals section */
+    .goals-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .goal-item {
+      background: var(--surface2);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+    }
+
+    .goal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+
+    .goal-name { font-weight: 600; font-size: 0.9rem; }
+
+    .goal-pct { font-size: 0.8rem; color: var(--accent); font-weight: 600; }
+
+    .progress-bar {
+      height: 6px;
+      background: var(--bg);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 999px;
+      transition: width 0.3s;
+    }
+
+    .goal-actions {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+
+    /* Stats */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    .stat-card {
+      background: var(--surface2);
+      border-radius: 8px;
+      padding: 0.75rem;
+      text-align: center;
+    }
+
+    .stat-val {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .stat-label {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-top: 0.15rem;
+    }
+
+    .empty-state {
+      text-align: center;
+      color: var(--text-muted);
+      padding: 2rem 1rem;
+      font-size: 0.9rem;
+    }
+
+    .full-width { grid-column: 1 / -1; }
+
+    .filter-bar {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .filter-bar button {
+      padding: 0.3rem 0.75rem;
+      font-size: 0.8rem;
+      border-radius: 999px;
+    }
+
+    .filter-bar button.active {
+      background: var(--accent);
+      color: var(--bg);
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1><span>Josh's</span> Job Scheduler & Life Planner</h1>
+  <div class="header-date" id="headerDate"></div>
+</header>
+
+<div class="app">
+
+  <!-- Stats -->
+  <div class="panel full-width">
+    <div class="stats">
+      <div class="stat-card">
+        <div class="stat-val" id="statPending">0</div>
+        <div class="stat-label">Pending</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" id="statDone">0</div>
+        <div class="stat-label">Completed</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" id="statGoals">0</div>
+        <div class="stat-label">Goals</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Job -->
+  <div class="panel">
+    <div class="panel-title"><span class="dot" style="background:var(--accent)"></span> Add Job / Task</div>
+    <form id="jobForm">
+      <div class="form-row stack">
+        <label for="jobName">Task name</label>
+        <input id="jobName" type="text" placeholder="e.g. Finish report, Grocery shopping" required>
+      </div>
+      <div class="form-row">
+        <div style="flex:1">
+          <label for="jobDate">Date</label>
+          <input id="jobDate" type="date">
+        </div>
+        <div style="flex:1">
+          <label for="jobTime">Time</label>
+          <input id="jobTime" type="time">
+        </div>
+      </div>
+      <div class="form-row">
+        <div style="flex:1">
+          <label for="jobPriority">Priority</label>
+          <select id="jobPriority">
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+            <option value="low">Low</option>
+          </select>
+        </div>
+        <div style="flex:1">
+          <label for="jobCategory">Category</label>
+          <select id="jobCategory">
+            <option value="work">Work</option>
+            <option value="personal">Personal</option>
+            <option value="health">Health</option>
+            <option value="finance">Finance</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row stack">
+        <label for="jobNotes">Notes (optional)</label>
+        <textarea id="jobNotes" placeholder="Any additional details..."></textarea>
+      </div>
+      <button type="submit" style="width:100%">Add Task</button>
+    </form>
+  </div>
+
+  <!-- Week View -->
+  <div class="panel">
+    <div class="panel-title"><span class="dot" style="background:var(--purple)"></span> This Week</div>
+    <div class="week-view" id="weekView"></div>
+  </div>
+
+  <!-- Job List -->
+  <div class="panel full-width">
+    <div class="panel-title"><span class="dot" style="background:var(--green)"></span> Scheduled Tasks</div>
+    <div class="filter-bar" id="filterBar">
+      <button class="secondary active" data-filter="all">All</button>
+      <button class="secondary" data-filter="work">Work</button>
+      <button class="secondary" data-filter="personal">Personal</button>
+      <button class="secondary" data-filter="health">Health</button>
+      <button class="secondary" data-filter="finance">Finance</button>
+      <button class="secondary" data-filter="done">Completed</button>
+    </div>
+    <ul class="job-list" id="jobList">
+      <li class="empty-state">No tasks yet. Add one above to get started!</li>
+    </ul>
+  </div>
+
+  <!-- Goals -->
+  <div class="panel full-width">
+    <div class="panel-title"><span class="dot" style="background:var(--yellow)"></span> Life Goals</div>
+    <form id="goalForm" style="margin-bottom:1rem">
+      <div class="form-row">
+        <input id="goalName" type="text" placeholder="Goal name (e.g. Run a marathon)" required style="flex:2">
+        <input id="goalTarget" type="number" placeholder="Target" min="1" required style="flex:1">
+        <button type="submit">Add Goal</button>
+      </div>
+    </form>
+    <ul class="goals-list" id="goalList">
+      <li class="empty-state">No goals yet. Set one to track your progress!</li>
+    </ul>
+  </div>
+
+</div>
+
+<script>
+  // ---- State ----
+  const STATE_KEY = 'josh-planner';
+  let state = loadState();
+
+  function loadState() {
+    try {
+      const s = JSON.parse(localStorage.getItem(STATE_KEY));
+      if (s && s.jobs && s.goals) return s;
+    } catch {}
+    return { jobs: [], goals: [] };
+  }
+
+  function saveState() {
+    localStorage.setItem(STATE_KEY, JSON.stringify(state));
+  }
+
+  // ---- Date helpers ----
+  function fmtDate(d) {
+    return new Date(d).toLocaleDateString('en-NZ', { weekday: 'short', day: 'numeric', month: 'short' });
+  }
+
+  function fmtTime(t) {
+    if (!t) return '';
+    const [h, m] = t.split(':');
+    const hr = parseInt(h);
+    return `${hr > 12 ? hr - 12 : hr || 12}:${m} ${hr >= 12 ? 'PM' : 'AM'}`;
+  }
+
+  function getWeekDays() {
+    const today = new Date();
+    const day = today.getDay();
+    const mon = new Date(today);
+    mon.setDate(today.getDate() - ((day + 6) % 7));
+    const days = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(mon);
+      d.setDate(mon.getDate() + i);
+      days.push(d);
+    }
+    return days;
+  }
+
+  function dateStr(d) {
+    return d.toISOString().split('T')[0];
+  }
+
+  // ---- Header ----
+  document.getElementById('headerDate').textContent =
+    new Date().toLocaleDateString('en-NZ', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+  // Set default date to today
+  document.getElementById('jobDate').value = dateStr(new Date());
+
+  // ---- Render ----
+  let currentFilter = 'all';
+
+  function render() {
+    renderStats();
+    renderJobs();
+    renderWeek();
+    renderGoals();
+    saveState();
+  }
+
+  function renderStats() {
+    const pending = state.jobs.filter(j => !j.done).length;
+    const done = state.jobs.filter(j => j.done).length;
+    document.getElementById('statPending').textContent = pending;
+    document.getElementById('statDone').textContent = done;
+    document.getElementById('statGoals').textContent = state.goals.length;
+  }
+
+  function renderJobs() {
+    const list = document.getElementById('jobList');
+    let jobs = [...state.jobs];
+
+    if (currentFilter === 'done') {
+      jobs = jobs.filter(j => j.done);
+    } else if (currentFilter !== 'all') {
+      jobs = jobs.filter(j => j.category === currentFilter && !j.done);
+    }
+
+    // Sort: undone first, then by date, then by priority
+    const priOrder = { high: 0, medium: 1, low: 2 };
+    jobs.sort((a, b) => {
+      if (a.done !== b.done) return a.done ? 1 : -1;
+      if (a.date !== b.date) return (a.date || 'z').localeCompare(b.date || 'z');
+      return (priOrder[a.priority] || 1) - (priOrder[b.priority] || 1);
+    });
+
+    if (jobs.length === 0) {
+      list.innerHTML = '<li class="empty-state">No tasks match this filter.</li>';
+      return;
+    }
+
+    list.innerHTML = jobs.map(j => `
+      <li class="job-item ${j.done ? 'done' : ''}">
+        <input type="checkbox" class="job-check" ${j.done ? 'checked' : ''} onchange="toggleJob('${j.id}')">
+        <div class="job-info">
+          <div class="job-name">${esc(j.name)}</div>
+          <div class="job-meta">
+            ${j.date ? `<span>${fmtDate(j.date)}</span>` : ''}
+            ${j.time ? `<span>${fmtTime(j.time)}</span>` : ''}
+            <span class="badge ${j.priority}">${j.priority}</span>
+            <span class="badge ${j.category}">${j.category}</span>
+          </div>
+          ${j.notes ? `<div style="font-size:0.75rem;color:var(--text-muted);margin-top:0.25rem">${esc(j.notes)}</div>` : ''}
+        </div>
+        <div class="job-actions">
+          <button class="danger" onclick="deleteJob('${j.id}')">remove</button>
+        </div>
+      </li>
+    `).join('');
+  }
+
+  function renderWeek() {
+    const days = getWeekDays();
+    const today = dateStr(new Date());
+    const container = document.getElementById('weekView');
+    const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+    container.innerHTML = days.map((d, i) => {
+      const ds = dateStr(d);
+      const dayJobs = state.jobs.filter(j => j.date === ds && !j.done);
+      return `
+        <div class="day-col">
+          <div class="day-label">${dayNames[i]}</div>
+          <div class="day-num ${ds === today ? 'today' : ''}">${d.getDate()}</div>
+          <div class="day-tasks">
+            ${dayJobs.slice(0, 3).map(j => `<div class="day-task ${j.priority}">${esc(j.name)}</div>`).join('')}
+            ${dayJobs.length > 3 ? `<div class="day-task">+${dayJobs.length - 3} more</div>` : ''}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function renderGoals() {
+    const list = document.getElementById('goalList');
+    if (state.goals.length === 0) {
+      list.innerHTML = '<li class="empty-state">No goals yet. Set one to track your progress!</li>';
+      return;
+    }
+
+    list.innerHTML = state.goals.map(g => {
+      const pct = Math.min(100, Math.round((g.current / g.target) * 100));
+      return `
+        <li class="goal-item">
+          <div class="goal-header">
+            <span class="goal-name">${esc(g.name)}</span>
+            <span class="goal-pct">${g.current} / ${g.target} (${pct}%)</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width:${pct}%"></div>
+          </div>
+          <div class="goal-actions">
+            <button class="secondary" onclick="updateGoal('${g.id}', -1)" style="padding:0.25rem 0.6rem;font-size:0.75rem">-1</button>
+            <button class="secondary" onclick="updateGoal('${g.id}', 1)" style="padding:0.25rem 0.6rem;font-size:0.75rem">+1</button>
+            <button class="secondary" onclick="updateGoal('${g.id}', 5)" style="padding:0.25rem 0.6rem;font-size:0.75rem">+5</button>
+            <button class="danger" onclick="deleteGoal('${g.id}')">remove</button>
+          </div>
+        </li>
+      `;
+    }).join('');
+  }
+
+  // ---- Actions ----
+  function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+
+  function esc(s) {
+    const d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  document.getElementById('jobForm').addEventListener('submit', e => {
+    e.preventDefault();
+    state.jobs.push({
+      id: uid(),
+      name: document.getElementById('jobName').value.trim(),
+      date: document.getElementById('jobDate').value,
+      time: document.getElementById('jobTime').value,
+      priority: document.getElementById('jobPriority').value,
+      category: document.getElementById('jobCategory').value,
+      notes: document.getElementById('jobNotes').value.trim(),
+      done: false
+    });
+    e.target.reset();
+    document.getElementById('jobDate').value = dateStr(new Date());
+    render();
+  });
+
+  document.getElementById('goalForm').addEventListener('submit', e => {
+    e.preventDefault();
+    state.goals.push({
+      id: uid(),
+      name: document.getElementById('goalName').value.trim(),
+      target: parseInt(document.getElementById('goalTarget').value),
+      current: 0
+    });
+    e.target.reset();
+    render();
+  });
+
+  window.toggleJob = function(id) {
+    const job = state.jobs.find(j => j.id === id);
+    if (job) job.done = !job.done;
+    render();
+  };
+
+  window.deleteJob = function(id) {
+    state.jobs = state.jobs.filter(j => j.id !== id);
+    render();
+  };
+
+  window.updateGoal = function(id, delta) {
+    const goal = state.goals.find(g => g.id === id);
+    if (goal) goal.current = Math.max(0, goal.current + delta);
+    render();
+  };
+
+  window.deleteGoal = function(id) {
+    state.goals = state.goals.filter(g => g.id !== id);
+    render();
+  };
+
+  // Filters
+  document.getElementById('filterBar').addEventListener('click', e => {
+    if (e.target.dataset.filter) {
+      currentFilter = e.target.dataset.filter;
+      document.querySelectorAll('#filterBar button').forEach(b => b.classList.remove('active'));
+      e.target.classList.add('active');
+      renderJobs();
+    }
+  });
+
+  // ---- Init ----
+  render();
+</script>
+
+</body>
+</html>
