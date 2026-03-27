@@ -3,749 +3,924 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Josh's Job Scheduler & Life Planner</title>
+  <title>Josh's Landscaping CRM</title>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
     :root {
-      --bg: #0f172a;
-      --surface: #1e293b;
-      --surface2: #334155;
-      --border: #475569;
-      --text: #f1f5f9;
-      --text-muted: #94a3b8;
-      --accent: #38bdf8;
-      --accent-hover: #7dd3fc;
-      --green: #4ade80;
-      --yellow: #facc15;
-      --red: #f87171;
-      --purple: #c084fc;
+      --bg: #fafaf9;
+      --surface: #ffffff;
+      --surface2: #f5f5f4;
+      --border: #e7e5e4;
+      --border-dark: #d6d3d1;
+      --text: #1c1917;
+      --text-secondary: #57534e;
+      --text-muted: #a8a29e;
+      --green: #16a34a;
+      --green-light: #dcfce7;
+      --green-bg: #f0fdf4;
+      --orange: #ea580c;
+      --orange-light: #ffedd5;
+      --red: #dc2626;
+      --red-light: #fef2f2;
+      --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+      --shadow-lg: 0 4px 12px rgba(0,0,0,0.08);
+      --radius: 10px;
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
       background: var(--bg);
       color: var(--text);
       min-height: 100vh;
+      display: flex;
+      flex-direction: column;
     }
 
-    header {
+    /* ---- NAV ---- */
+    nav {
       background: var(--surface);
       border-bottom: 1px solid var(--border);
-      padding: 1.25rem 2rem;
+      padding: 0 2rem;
+      height: 56px;
       display: flex;
       align-items: center;
       justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 50;
     }
 
-    header h1 {
-      font-size: 1.5rem;
-      font-weight: 700;
-    }
-
-    header h1 span { color: var(--accent); }
-
-    .header-date {
-      color: var(--text-muted);
-      font-size: 0.9rem;
-    }
-
-    .app {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 2rem 1.5rem;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1.5rem;
-    }
-
-    @media (max-width: 768px) {
-      .app { grid-template-columns: 1fr; }
-    }
-
-    .panel {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 1.5rem;
-    }
-
-    .panel-title {
-      font-size: 1.1rem;
-      font-weight: 600;
-      margin-bottom: 1rem;
+    .logo {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
-    }
-
-    .panel-title .dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      display: inline-block;
-    }
-
-    /* Form styles */
-    .form-row {
-      display: flex;
-      gap: 0.5rem;
-      margin-bottom: 0.75rem;
-    }
-
-    .form-row.stack {
-      flex-direction: column;
-    }
-
-    input, select, textarea {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      color: var(--text);
-      padding: 0.5rem 0.75rem;
-      font-size: 0.875rem;
-      font-family: inherit;
-      width: 100%;
-      outline: none;
-      transition: border-color 0.15s;
-    }
-
-    input:focus, select:focus, textarea:focus {
-      border-color: var(--accent);
-    }
-
-    textarea { resize: vertical; min-height: 60px; }
-
-    label {
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      margin-bottom: 0.25rem;
-      display: block;
-    }
-
-    button {
-      background: var(--accent);
-      color: var(--bg);
-      border: none;
-      border-radius: 8px;
-      padding: 0.5rem 1rem;
-      font-size: 0.875rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.15s;
-      white-space: nowrap;
-    }
-
-    button:hover { background: var(--accent-hover); }
-
-    button.secondary {
-      background: var(--surface2);
-      color: var(--text);
-    }
-
-    button.secondary:hover { background: var(--border); }
-
-    button.danger {
-      background: transparent;
-      color: var(--red);
-      padding: 0.25rem 0.5rem;
-      font-size: 0.75rem;
-    }
-
-    button.danger:hover { background: rgba(248,113,113,0.1); }
-
-    /* Job list */
-    .job-list {
-      list-style: none;
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-      max-height: 400px;
-      overflow-y: auto;
-    }
-
-    .job-item {
-      background: var(--surface2);
-      border-radius: 8px;
-      padding: 0.75rem 1rem;
-      display: flex;
-      align-items: flex-start;
-      gap: 0.75rem;
-      transition: background 0.15s;
-    }
-
-    .job-item:hover { background: var(--border); }
-
-    .job-check {
-      appearance: none;
-      width: 20px;
-      height: 20px;
-      min-width: 20px;
-      border: 2px solid var(--border);
-      border-radius: 50%;
-      cursor: pointer;
-      margin-top: 2px;
-      transition: all 0.15s;
-    }
-
-    .job-check:checked {
-      background: var(--green);
-      border-color: var(--green);
-    }
-
-    .job-info { flex: 1; min-width: 0; }
-
-    .job-name {
-      font-weight: 600;
-      font-size: 0.9rem;
-      word-break: break-word;
-    }
-
-    .job-meta {
-      font-size: 0.75rem;
-      color: var(--text-muted);
-      margin-top: 0.25rem;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-    }
-
-    .job-item.done .job-name {
-      text-decoration: line-through;
-      opacity: 0.5;
-    }
-
-    .badge {
-      display: inline-block;
-      padding: 0.1rem 0.5rem;
-      border-radius: 999px;
-      font-size: 0.7rem;
-      font-weight: 600;
-    }
-
-    .badge.high { background: rgba(248,113,113,0.2); color: var(--red); }
-    .badge.medium { background: rgba(250,204,21,0.2); color: var(--yellow); }
-    .badge.low { background: rgba(74,222,128,0.2); color: var(--green); }
-
-    .badge.work { background: rgba(56,189,248,0.15); color: var(--accent); }
-    .badge.personal { background: rgba(192,132,252,0.15); color: var(--purple); }
-    .badge.health { background: rgba(74,222,128,0.15); color: var(--green); }
-    .badge.finance { background: rgba(250,204,21,0.15); color: var(--yellow); }
-
-    .job-actions {
-      display: flex;
-      flex-direction: column;
-      gap: 0.25rem;
-    }
-
-    /* Calendar view */
-    .week-view {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 0.5rem;
-    }
-
-    .day-col {
-      text-align: center;
-    }
-
-    .day-label {
-      font-size: 0.7rem;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      margin-bottom: 0.25rem;
-    }
-
-    .day-num {
-      font-size: 1.1rem;
+      gap: 0.6rem;
       font-weight: 700;
-      width: 36px;
-      height: 36px;
+      font-size: 1.1rem;
+    }
+
+    .logo-icon {
+      width: 32px;
+      height: 32px;
+      background: var(--green);
+      border-radius: 8px;
       display: flex;
       align-items: center;
       justify-content: center;
-      margin: 0 auto 0.5rem;
+      color: #fff;
+      font-size: 1rem;
+    }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .nav-date {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    .nav-stats {
+      display: flex;
+      gap: 1rem;
+      font-size: 0.8rem;
+    }
+
+    .nav-stat {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .nav-stat .dot {
+      width: 8px;
+      height: 8px;
       border-radius: 50%;
     }
 
-    .day-num.today {
-      background: var(--accent);
-      color: var(--bg);
+    /* ---- LAYOUT ---- */
+    .layout {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      height: calc(100vh - 56px);
     }
 
-    .day-tasks {
+    @media (max-width: 900px) {
+      .layout {
+        grid-template-columns: 1fr;
+        grid-template-rows: 1fr 1fr;
+      }
+    }
+
+    /* ---- CALENDAR ---- */
+    .calendar-panel {
+      padding: 1.5rem;
+      overflow-y: auto;
+    }
+
+    .cal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+    }
+
+    .cal-title {
+      font-size: 1.35rem;
+      font-weight: 700;
+    }
+
+    .cal-nav {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .cal-nav button {
+      width: 36px;
+      height: 36px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+    }
+
+    .cal-nav button:hover {
+      background: var(--surface2);
+      border-color: var(--border-dark);
+    }
+
+    .cal-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .cal-day-header {
+      background: var(--surface2);
+      padding: 0.6rem 0.5rem;
+      text-align: center;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      letter-spacing: 0.05em;
+    }
+
+    .cal-cell {
+      background: var(--surface);
+      min-height: 100px;
+      padding: 0.4rem;
+      cursor: pointer;
+      transition: background 0.1s;
+      position: relative;
+    }
+
+    .cal-cell:hover { background: var(--green-bg); }
+
+    .cal-cell.other-month {
+      background: var(--surface2);
+      opacity: 0.5;
+    }
+
+    .cal-cell.today .cal-date {
+      background: var(--green);
+      color: #fff;
+      border-radius: 50%;
+      width: 26px;
+      height: 26px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .cal-date {
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 0.25rem;
+      width: 26px;
+      height: 26px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .cal-events {
       display: flex;
       flex-direction: column;
-      gap: 0.25rem;
+      gap: 2px;
     }
 
-    .day-task {
+    .cal-event {
       font-size: 0.65rem;
-      background: var(--surface2);
+      padding: 0.15rem 0.35rem;
       border-radius: 4px;
-      padding: 0.2rem 0.35rem;
-      text-align: left;
+      white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      white-space: nowrap;
-      border-left: 3px solid var(--accent);
+      font-weight: 500;
+      cursor: pointer;
     }
 
-    .day-task.high { border-left-color: var(--red); }
-    .day-task.medium { border-left-color: var(--yellow); }
-    .day-task.low { border-left-color: var(--green); }
-
-    /* Goals section */
-    .goals-list {
-      list-style: none;
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
+    .cal-event.job {
+      background: var(--green-light);
+      color: var(--green);
     }
 
-    .goal-item {
-      background: var(--surface2);
-      border-radius: 8px;
-      padding: 0.75rem 1rem;
+    .cal-event.reminder {
+      background: var(--orange-light);
+      color: var(--orange);
     }
 
-    .goal-header {
+    .cal-event.urgent {
+      background: var(--red-light);
+      color: var(--red);
+    }
+
+    .cal-overflow {
+      font-size: 0.6rem;
+      color: var(--text-muted);
+      padding: 0.1rem 0.35rem;
+      font-weight: 500;
+    }
+
+    /* ---- Day Detail Modal ---- */
+    .day-detail {
+      display: none;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-lg);
+      margin-top: 1rem;
+      padding: 1.25rem;
+    }
+
+    .day-detail.open { display: block; }
+
+    .day-detail-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 0.5rem;
-    }
-
-    .goal-name { font-weight: 600; font-size: 0.9rem; }
-
-    .goal-pct { font-size: 0.8rem; color: var(--accent); font-weight: 600; }
-
-    .progress-bar {
-      height: 6px;
-      background: var(--bg);
-      border-radius: 999px;
-      overflow: hidden;
-    }
-
-    .progress-fill {
-      height: 100%;
-      background: var(--accent);
-      border-radius: 999px;
-      transition: width 0.3s;
-    }
-
-    .goal-actions {
-      display: flex;
-      gap: 0.5rem;
-      margin-top: 0.5rem;
-    }
-
-    /* Stats */
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 0.75rem;
       margin-bottom: 1rem;
     }
 
-    .stat-card {
-      background: var(--surface2);
-      border-radius: 8px;
-      padding: 0.75rem;
-      text-align: center;
-    }
-
-    .stat-val {
-      font-size: 1.5rem;
+    .day-detail-title {
+      font-size: 1rem;
       font-weight: 700;
-      color: var(--accent);
     }
 
-    .stat-label {
-      font-size: 0.7rem;
+    .close-btn {
+      background: none;
+      border: none;
+      font-size: 1.2rem;
       color: var(--text-muted);
-      text-transform: uppercase;
+      cursor: pointer;
+    }
+
+    .detail-event {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      padding: 0.65rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .detail-event:last-child { border-bottom: none; }
+
+    .detail-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-top: 4px;
+      flex-shrink: 0;
+    }
+
+    .detail-dot.job { background: var(--green); }
+    .detail-dot.reminder { background: var(--orange); }
+    .detail-dot.urgent { background: var(--red); }
+
+    .detail-info { flex: 1; }
+
+    .detail-name {
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .detail-meta {
+      font-size: 0.75rem;
+      color: var(--text-muted);
       margin-top: 0.15rem;
     }
 
-    .empty-state {
-      text-align: center;
+    .detail-delete {
+      background: none;
+      border: none;
       color: var(--text-muted);
-      padding: 2rem 1rem;
-      font-size: 0.9rem;
+      cursor: pointer;
+      font-size: 0.85rem;
+      padding: 0.25rem;
+      border-radius: 4px;
+      transition: all 0.15s;
     }
 
-    .full-width { grid-column: 1 / -1; }
+    .detail-delete:hover {
+      color: var(--red);
+      background: var(--red-light);
+    }
 
-    .filter-bar {
+    .detail-empty {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      padding: 1rem 0;
+      text-align: center;
+    }
+
+    /* ---- CHAT ---- */
+    .chat-panel {
+      border-left: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      background: var(--surface);
+      height: calc(100vh - 56px);
+    }
+
+    .chat-header {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .chat-header h2 {
+      font-size: 0.95rem;
+      font-weight: 700;
+    }
+
+    .chat-header p {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.2rem;
+    }
+
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .msg {
+      max-width: 90%;
+      padding: 0.65rem 0.85rem;
+      border-radius: 12px;
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+
+    .msg.bot {
+      background: var(--surface2);
+      color: var(--text);
+      align-self: flex-start;
+      border-bottom-left-radius: 4px;
+    }
+
+    .msg.user {
+      background: var(--green);
+      color: #fff;
+      align-self: flex-end;
+      border-bottom-right-radius: 4px;
+    }
+
+    .msg .event-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.5rem 0.65rem;
+      margin-top: 0.5rem;
+      font-size: 0.8rem;
+    }
+
+    .msg .event-card .ec-title {
+      font-weight: 600;
+    }
+
+    .msg .event-card .ec-meta {
+      color: var(--text-muted);
+      font-size: 0.7rem;
+      margin-top: 0.15rem;
+    }
+
+    .chat-input-area {
+      padding: 1rem 1.25rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .chat-form {
       display: flex;
       gap: 0.5rem;
-      margin-bottom: 1rem;
-      flex-wrap: wrap;
     }
 
-    .filter-bar button {
-      padding: 0.3rem 0.75rem;
-      font-size: 0.8rem;
+    .chat-form input {
+      flex: 1;
+      padding: 0.6rem 0.85rem;
+      border: 1px solid var(--border);
       border-radius: 999px;
+      font-size: 0.85rem;
+      font-family: inherit;
+      outline: none;
+      background: var(--surface2);
+      color: var(--text);
+      transition: border-color 0.15s;
     }
 
-    .filter-bar button.active {
-      background: var(--accent);
-      color: var(--bg);
+    .chat-form input:focus { border-color: var(--green); }
+
+    .chat-form input::placeholder { color: var(--text-muted); }
+
+    .chat-form button {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: none;
+      background: var(--green);
+      color: #fff;
+      font-size: 1.1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s;
+      flex-shrink: 0;
+    }
+
+    .chat-form button:hover { background: #15803d; }
+
+    .suggestions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-top: 0.6rem;
+    }
+
+    .suggestion {
+      font-size: 0.7rem;
+      padding: 0.3rem 0.6rem;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--surface);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .suggestion:hover {
+      background: var(--green-bg);
+      border-color: var(--green);
+      color: var(--green);
     }
   </style>
 </head>
 <body>
 
-<header>
-  <h1><span>Josh's</span> Job Scheduler & Life Planner</h1>
-  <div class="header-date" id="headerDate"></div>
-</header>
+<nav>
+  <div class="logo">
+    <div class="logo-icon">&#9752;</div>
+    <span>Josh's Landscaping</span>
+  </div>
+  <div class="nav-right">
+    <div class="nav-stats">
+      <div class="nav-stat"><div class="dot" style="background:var(--green)"></div> <span id="navJobs">0</span> jobs</div>
+      <div class="nav-stat"><div class="dot" style="background:var(--orange)"></div> <span id="navReminders">0</span> reminders</div>
+    </div>
+    <div class="nav-date" id="navDate"></div>
+  </div>
+</nav>
 
-<div class="app">
+<div class="layout">
 
-  <!-- Stats -->
-  <div class="panel full-width">
-    <div class="stats">
-      <div class="stat-card">
-        <div class="stat-val" id="statPending">0</div>
-        <div class="stat-label">Pending</div>
+  <!-- Calendar -->
+  <div class="calendar-panel">
+    <div class="cal-header">
+      <div class="cal-title" id="calTitle"></div>
+      <div class="cal-nav">
+        <button onclick="changeMonth(-1)">&#8249;</button>
+        <button onclick="goToday()" style="font-size:0.75rem;width:auto;padding:0 12px">Today</button>
+        <button onclick="changeMonth(1)">&#8250;</button>
       </div>
-      <div class="stat-card">
-        <div class="stat-val" id="statDone">0</div>
-        <div class="stat-label">Completed</div>
+    </div>
+    <div class="cal-grid" id="calGrid"></div>
+    <div class="day-detail" id="dayDetail">
+      <div class="day-detail-header">
+        <div class="day-detail-title" id="dayDetailTitle"></div>
+        <button class="close-btn" onclick="closeDayDetail()">&times;</button>
       </div>
-      <div class="stat-card">
-        <div class="stat-val" id="statGoals">0</div>
-        <div class="stat-label">Goals</div>
-      </div>
+      <div id="dayDetailList"></div>
     </div>
   </div>
 
-  <!-- Add Job -->
-  <div class="panel">
-    <div class="panel-title"><span class="dot" style="background:var(--accent)"></span> Add Job / Task</div>
-    <form id="jobForm">
-      <div class="form-row stack">
-        <label for="jobName">Task name</label>
-        <input id="jobName" type="text" placeholder="e.g. Finish report, Grocery shopping" required>
-      </div>
-      <div class="form-row">
-        <div style="flex:1">
-          <label for="jobDate">Date</label>
-          <input id="jobDate" type="date">
-        </div>
-        <div style="flex:1">
-          <label for="jobTime">Time</label>
-          <input id="jobTime" type="time">
-        </div>
-      </div>
-      <div class="form-row">
-        <div style="flex:1">
-          <label for="jobPriority">Priority</label>
-          <select id="jobPriority">
-            <option value="medium">Medium</option>
-            <option value="high">High</option>
-            <option value="low">Low</option>
-          </select>
-        </div>
-        <div style="flex:1">
-          <label for="jobCategory">Category</label>
-          <select id="jobCategory">
-            <option value="work">Work</option>
-            <option value="personal">Personal</option>
-            <option value="health">Health</option>
-            <option value="finance">Finance</option>
-          </select>
-        </div>
-      </div>
-      <div class="form-row stack">
-        <label for="jobNotes">Notes (optional)</label>
-        <textarea id="jobNotes" placeholder="Any additional details..."></textarea>
-      </div>
-      <button type="submit" style="width:100%">Add Task</button>
-    </form>
-  </div>
-
-  <!-- Week View -->
-  <div class="panel">
-    <div class="panel-title"><span class="dot" style="background:var(--purple)"></span> This Week</div>
-    <div class="week-view" id="weekView"></div>
-  </div>
-
-  <!-- Job List -->
-  <div class="panel full-width">
-    <div class="panel-title"><span class="dot" style="background:var(--green)"></span> Scheduled Tasks</div>
-    <div class="filter-bar" id="filterBar">
-      <button class="secondary active" data-filter="all">All</button>
-      <button class="secondary" data-filter="work">Work</button>
-      <button class="secondary" data-filter="personal">Personal</button>
-      <button class="secondary" data-filter="health">Health</button>
-      <button class="secondary" data-filter="finance">Finance</button>
-      <button class="secondary" data-filter="done">Completed</button>
+  <!-- Chat -->
+  <div class="chat-panel">
+    <div class="chat-header">
+      <h2>Scheduling Assistant</h2>
+      <p>Tell me about jobs, reminders, or anything to schedule</p>
     </div>
-    <ul class="job-list" id="jobList">
-      <li class="empty-state">No tasks yet. Add one above to get started!</li>
-    </ul>
-  </div>
-
-  <!-- Goals -->
-  <div class="panel full-width">
-    <div class="panel-title"><span class="dot" style="background:var(--yellow)"></span> Life Goals</div>
-    <form id="goalForm" style="margin-bottom:1rem">
-      <div class="form-row">
-        <input id="goalName" type="text" placeholder="Goal name (e.g. Run a marathon)" required style="flex:2">
-        <input id="goalTarget" type="number" placeholder="Target" min="1" required style="flex:1">
-        <button type="submit">Add Goal</button>
+    <div class="chat-messages" id="chatMessages">
+      <div class="msg bot">
+        Hey Josh! I'm your scheduling assistant. Just tell me what you need and I'll put it on the calendar. Try things like:
+        <br><br>
+        <strong>"Mow the Smiths lawn next Tuesday at 9am"</strong><br>
+        <strong>"Remind me to quote the Henderson job on Friday"</strong><br>
+        <strong>"Hedge trimming at 42 Oak St on April 3"</strong>
       </div>
-    </form>
-    <ul class="goals-list" id="goalList">
-      <li class="empty-state">No goals yet. Set one to track your progress!</li>
-    </ul>
+    </div>
+    <div class="chat-input-area">
+      <form class="chat-form" id="chatForm">
+        <input id="chatInput" type="text" placeholder="Type a job, reminder, or question..." autocomplete="off">
+        <button type="submit">&#10148;</button>
+      </form>
+      <div class="suggestions">
+        <span class="suggestion" onclick="useSuggestion(this)">Mow lawns at 14 Elm St tomorrow 8am</span>
+        <span class="suggestion" onclick="useSuggestion(this)">Remind me to order mulch on Monday</span>
+        <span class="suggestion" onclick="useSuggestion(this)">Hedge trim at the Parkers next Wednesday</span>
+        <span class="suggestion" onclick="useSuggestion(this)">Show my week</span>
+      </div>
+    </div>
   </div>
 
 </div>
 
 <script>
-  // ---- State ----
-  const STATE_KEY = 'josh-planner';
-  let state = loadState();
+// ---- State ----
+const STORE_KEY = 'josh-crm';
+let state = loadState();
+let viewYear, viewMonth;
 
-  function loadState() {
-    try {
-      const s = JSON.parse(localStorage.getItem(STATE_KEY));
-      if (s && s.jobs && s.goals) return s;
-    } catch {}
-    return { jobs: [], goals: [] };
-  }
+function loadState() {
+  try {
+    const s = JSON.parse(localStorage.getItem(STORE_KEY));
+    if (s && Array.isArray(s.events)) return s;
+  } catch {}
+  return { events: [] };
+}
 
-  function saveState() {
-    localStorage.setItem(STATE_KEY, JSON.stringify(state));
-  }
+function save() {
+  localStorage.setItem(STORE_KEY, JSON.stringify(state));
+}
 
-  // ---- Date helpers ----
-  function fmtDate(d) {
-    return new Date(d).toLocaleDateString('en-NZ', { weekday: 'short', day: 'numeric', month: 'short' });
-  }
+// ---- Date Helpers ----
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const DAYS_SHORT = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const DAYS_FULL = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 
-  function fmtTime(t) {
-    if (!t) return '';
-    const [h, m] = t.split(':');
-    const hr = parseInt(h);
-    return `${hr > 12 ? hr - 12 : hr || 12}:${m} ${hr >= 12 ? 'PM' : 'AM'}`;
-  }
+function today() { return new Date(); }
+function dateKey(d) { return d.toISOString().split('T')[0]; }
+function sameDay(a, b) { return dateKey(a) === dateKey(b); }
 
-  function getWeekDays() {
-    const today = new Date();
-    const day = today.getDay();
-    const mon = new Date(today);
-    mon.setDate(today.getDate() - ((day + 6) % 7));
-    const days = [];
-    for (let i = 0; i < 7; i++) {
-      const d = new Date(mon);
-      d.setDate(mon.getDate() + i);
-      days.push(d);
+function parseRelativeDay(text) {
+  const t = today();
+  const lower = text.toLowerCase();
+
+  if (lower.includes('today')) return t;
+  if (lower.includes('tomorrow')) { t.setDate(t.getDate() + 1); return t; }
+
+  const dayMatch = lower.match(/\b(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/);
+  if (dayMatch) {
+    const target = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'].indexOf(dayMatch[1]);
+    const curr = t.getDay();
+    let diff = target - curr;
+    if (diff <= 0) diff += 7;
+    if (lower.includes('next') && diff <= 7) {
+      // "next" means the one coming, already handled by diff logic
     }
-    return days;
+    t.setDate(t.getDate() + diff);
+    return t;
   }
 
-  function dateStr(d) {
-    return d.toISOString().split('T')[0];
+  // Try explicit dates: "April 3", "3 April", "3/4", "2026-04-03"
+  const monthNames = ['january','february','march','april','may','june','july','august','september','october','november','december'];
+  const monthMatch = lower.match(new RegExp(`(${monthNames.join('|')})\\s+(\\d{1,2})`));
+  if (monthMatch) {
+    const m = monthNames.indexOf(monthMatch[1]);
+    const d = parseInt(monthMatch[2]);
+    const result = new Date(t.getFullYear(), m, d);
+    if (result < t) result.setFullYear(result.getFullYear() + 1);
+    return result;
   }
 
-  // ---- Header ----
-  document.getElementById('headerDate').textContent =
-    new Date().toLocaleDateString('en-NZ', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-
-  // Set default date to today
-  document.getElementById('jobDate').value = dateStr(new Date());
-
-  // ---- Render ----
-  let currentFilter = 'all';
-
-  function render() {
-    renderStats();
-    renderJobs();
-    renderWeek();
-    renderGoals();
-    saveState();
+  const monthMatch2 = lower.match(new RegExp(`(\\d{1,2})\\s+(${monthNames.join('|')})`));
+  if (monthMatch2) {
+    const d = parseInt(monthMatch2[1]);
+    const m = monthNames.indexOf(monthMatch2[2]);
+    const result = new Date(t.getFullYear(), m, d);
+    if (result < t) result.setFullYear(result.getFullYear() + 1);
+    return result;
   }
 
-  function renderStats() {
-    const pending = state.jobs.filter(j => !j.done).length;
-    const done = state.jobs.filter(j => j.done).length;
-    document.getElementById('statPending').textContent = pending;
-    document.getElementById('statDone').textContent = done;
-    document.getElementById('statGoals').textContent = state.goals.length;
+  return null;
+}
+
+function parseTime(text) {
+  const lower = text.toLowerCase();
+  const match = lower.match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/);
+  if (!match) return null;
+  let h = parseInt(match[1]);
+  const m = match[2] ? parseInt(match[2]) : 0;
+  const ampm = match[3];
+  if (ampm === 'pm' && h < 12) h += 12;
+  if (ampm === 'am' && h === 12) h = 0;
+  if (!ampm && h < 7) h += 12; // assume PM for small numbers
+  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+}
+
+function formatTime(t) {
+  if (!t) return '';
+  const [h, m] = t.split(':').map(Number);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const hr = h % 12 || 12;
+  return `${hr}:${String(m).padStart(2,'0')} ${ampm}`;
+}
+
+function formatDateNice(d) {
+  return new Date(d + 'T12:00:00').toLocaleDateString('en-NZ', { weekday: 'short', day: 'numeric', month: 'short' });
+}
+
+function formatDateFull(d) {
+  return new Date(d + 'T12:00:00').toLocaleDateString('en-NZ', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+// ---- Calendar Rendering ----
+function initCal() {
+  const t = today();
+  viewYear = t.getFullYear();
+  viewMonth = t.getMonth();
+  renderCal();
+}
+
+function changeMonth(delta) {
+  viewMonth += delta;
+  if (viewMonth > 11) { viewMonth = 0; viewYear++; }
+  if (viewMonth < 0) { viewMonth = 11; viewYear--; }
+  renderCal();
+  closeDayDetail();
+}
+
+function goToday() {
+  const t = today();
+  viewYear = t.getFullYear();
+  viewMonth = t.getMonth();
+  renderCal();
+  closeDayDetail();
+}
+
+function renderCal() {
+  document.getElementById('calTitle').textContent = `${MONTHS[viewMonth]} ${viewYear}`;
+
+  const grid = document.getElementById('calGrid');
+  const firstDay = new Date(viewYear, viewMonth, 1);
+  const lastDay = new Date(viewYear, viewMonth + 1, 0);
+  let startDay = (firstDay.getDay() + 6) % 7; // Monday start
+
+  let html = DAYS_SHORT.map(d => `<div class="cal-day-header">${d}</div>`).join('');
+
+  // Prev month fill
+  const prevLast = new Date(viewYear, viewMonth, 0);
+  for (let i = startDay - 1; i >= 0; i--) {
+    const d = new Date(viewYear, viewMonth - 1, prevLast.getDate() - i);
+    html += renderCell(d, true);
   }
 
-  function renderJobs() {
-    const list = document.getElementById('jobList');
-    let jobs = [...state.jobs];
+  // Current month
+  for (let i = 1; i <= lastDay.getDate(); i++) {
+    const d = new Date(viewYear, viewMonth, i);
+    html += renderCell(d, false);
+  }
 
-    if (currentFilter === 'done') {
-      jobs = jobs.filter(j => j.done);
-    } else if (currentFilter !== 'all') {
-      jobs = jobs.filter(j => j.category === currentFilter && !j.done);
-    }
+  // Next month fill
+  const totalCells = startDay + lastDay.getDate();
+  const remaining = (7 - (totalCells % 7)) % 7;
+  for (let i = 1; i <= remaining; i++) {
+    const d = new Date(viewYear, viewMonth + 1, i);
+    html += renderCell(d, true);
+  }
 
-    // Sort: undone first, then by date, then by priority
-    const priOrder = { high: 0, medium: 1, low: 2 };
-    jobs.sort((a, b) => {
-      if (a.done !== b.done) return a.done ? 1 : -1;
-      if (a.date !== b.date) return (a.date || 'z').localeCompare(b.date || 'z');
-      return (priOrder[a.priority] || 1) - (priOrder[b.priority] || 1);
-    });
+  grid.innerHTML = html;
+  updateNav();
+}
 
-    if (jobs.length === 0) {
-      list.innerHTML = '<li class="empty-state">No tasks match this filter.</li>';
-      return;
-    }
+function renderCell(date, otherMonth) {
+  const dk = dateKey(date);
+  const isToday = sameDay(date, today());
+  const events = state.events.filter(e => e.date === dk);
 
-    list.innerHTML = jobs.map(j => `
-      <li class="job-item ${j.done ? 'done' : ''}">
-        <input type="checkbox" class="job-check" ${j.done ? 'checked' : ''} onchange="toggleJob('${j.id}')">
-        <div class="job-info">
-          <div class="job-name">${esc(j.name)}</div>
-          <div class="job-meta">
-            ${j.date ? `<span>${fmtDate(j.date)}</span>` : ''}
-            ${j.time ? `<span>${fmtTime(j.time)}</span>` : ''}
-            <span class="badge ${j.priority}">${j.priority}</span>
-            <span class="badge ${j.category}">${j.category}</span>
-          </div>
-          ${j.notes ? `<div style="font-size:0.75rem;color:var(--text-muted);margin-top:0.25rem">${esc(j.notes)}</div>` : ''}
+  let evHtml = '';
+  const show = events.slice(0, 2);
+  show.forEach(e => {
+    evHtml += `<div class="cal-event ${e.type}">${e.time ? formatTime(e.time) + ' ' : ''}${esc(e.title)}</div>`;
+  });
+  if (events.length > 2) {
+    evHtml += `<div class="cal-overflow">+${events.length - 2} more</div>`;
+  }
+
+  return `<div class="cal-cell ${otherMonth ? 'other-month' : ''} ${isToday ? 'today' : ''}" onclick="openDay('${dk}')">
+    <div class="cal-date">${date.getDate()}</div>
+    <div class="cal-events">${evHtml}</div>
+  </div>`;
+}
+
+function updateNav() {
+  const jobs = state.events.filter(e => e.type === 'job').length;
+  const reminders = state.events.filter(e => e.type !== 'job').length;
+  document.getElementById('navJobs').textContent = jobs;
+  document.getElementById('navReminders').textContent = reminders;
+  document.getElementById('navDate').textContent = today().toLocaleDateString('en-NZ', { weekday: 'long', day: 'numeric', month: 'long' });
+}
+
+// ---- Day Detail ----
+let selectedDay = null;
+
+function openDay(dk) {
+  selectedDay = dk;
+  const panel = document.getElementById('dayDetail');
+  const title = document.getElementById('dayDetailTitle');
+  const list = document.getElementById('dayDetailList');
+
+  title.textContent = formatDateFull(dk);
+  const events = state.events.filter(e => e.date === dk).sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+
+  if (events.length === 0) {
+    list.innerHTML = '<div class="detail-empty">Nothing scheduled. Tell me in the chat to add something!</div>';
+  } else {
+    list.innerHTML = events.map(e => `
+      <div class="detail-event">
+        <div class="detail-dot ${e.type}"></div>
+        <div class="detail-info">
+          <div class="detail-name">${esc(e.title)}</div>
+          <div class="detail-meta">${e.time ? formatTime(e.time) : 'All day'} &middot; ${e.type}</div>
+          ${e.notes ? `<div class="detail-meta">${esc(e.notes)}</div>` : ''}
         </div>
-        <div class="job-actions">
-          <button class="danger" onclick="deleteJob('${j.id}')">remove</button>
-        </div>
-      </li>
+        <button class="detail-delete" onclick="deleteEvent('${e.id}')" title="Delete">&times;</button>
+      </div>
     `).join('');
   }
 
-  function renderWeek() {
-    const days = getWeekDays();
-    const today = dateStr(new Date());
-    const container = document.getElementById('weekView');
-    const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  panel.classList.add('open');
+}
 
-    container.innerHTML = days.map((d, i) => {
-      const ds = dateStr(d);
-      const dayJobs = state.jobs.filter(j => j.date === ds && !j.done);
-      return `
-        <div class="day-col">
-          <div class="day-label">${dayNames[i]}</div>
-          <div class="day-num ${ds === today ? 'today' : ''}">${d.getDate()}</div>
-          <div class="day-tasks">
-            ${dayJobs.slice(0, 3).map(j => `<div class="day-task ${j.priority}">${esc(j.name)}</div>`).join('')}
-            ${dayJobs.length > 3 ? `<div class="day-task">+${dayJobs.length - 3} more</div>` : ''}
-          </div>
-        </div>
-      `;
-    }).join('');
+function closeDayDetail() {
+  document.getElementById('dayDetail').classList.remove('open');
+  selectedDay = null;
+}
+
+function deleteEvent(id) {
+  state.events = state.events.filter(e => e.id !== id);
+  save();
+  renderCal();
+  if (selectedDay) openDay(selectedDay);
+}
+
+// ---- Chat / NLP ----
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+
+function esc(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function addMsg(text, sender, eventCard) {
+  const container = document.getElementById('chatMessages');
+  const div = document.createElement('div');
+  div.className = `msg ${sender}`;
+  let html = text;
+  if (eventCard) {
+    html += `<div class="event-card"><div class="ec-title">${esc(eventCard.title)}</div><div class="ec-meta">${formatDateNice(eventCard.date)}${eventCard.time ? ' at ' + formatTime(eventCard.time) : ''} &middot; ${eventCard.type}</div></div>`;
+  }
+  div.innerHTML = html;
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+}
+
+function processInput(text) {
+  addMsg(esc(text), 'user');
+
+  const lower = text.toLowerCase().trim();
+
+  // Show week summary
+  if (lower.includes('show') && (lower.includes('week') || lower.includes('schedule') || lower.includes('upcoming'))) {
+    return showWeekSummary();
   }
 
-  function renderGoals() {
-    const list = document.getElementById('goalList');
-    if (state.goals.length === 0) {
-      list.innerHTML = '<li class="empty-state">No goals yet. Set one to track your progress!</li>';
-      return;
+  // Clear all
+  if (lower.match(/\b(clear|delete|remove)\b.*\b(all|everything)\b/)) {
+    state.events = [];
+    save();
+    renderCal();
+    return addMsg("Done! I've cleared all events from the calendar.", 'bot');
+  }
+
+  // Try to parse as an event
+  const date = parseRelativeDay(text);
+  if (!date) {
+    return addMsg("I couldn't figure out the date for that. Try something like <strong>\"Mow lawns at 10 Elm St on Tuesday at 9am\"</strong> or <strong>\"Remind me to call Steve on April 5\"</strong>.", 'bot');
+  }
+
+  const time = parseTime(text);
+  const isReminder = lower.includes('remind') || lower.includes('remember') || lower.includes('don\'t forget') || lower.includes('note');
+  const isUrgent = lower.includes('urgent') || lower.includes('asap') || lower.includes('important');
+
+  // Extract title: remove date/time words to get the core task
+  let title = text
+    .replace(/\b(remind me to|remember to|don't forget to|remind me|remember|note to self)\b/gi, '')
+    .replace(/\b(on|at|next|this|for|the)\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday|today|tomorrow)\b/gi, '')
+    .replace(/\b(january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{1,2}\b/gi, '')
+    .replace(/\b\d{1,2}\s+(january|february|march|april|may|june|july|august|september|october|november|december)\b/gi, '')
+    .replace(/\b(at|@)\s*\d{1,2}(:\d{2})?\s*(am|pm)?\b/gi, '')
+    .replace(/\b(next|this|on|at|the|for)\b/gi, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+
+  if (title.length < 2) title = text.trim();
+  // Capitalize first letter
+  title = title.charAt(0).toUpperCase() + title.slice(1);
+
+  const type = isUrgent ? 'urgent' : (isReminder ? 'reminder' : 'job');
+
+  const event = {
+    id: uid(),
+    title,
+    date: dateKey(date),
+    time,
+    type,
+    notes: ''
+  };
+
+  state.events.push(event);
+  save();
+  renderCal();
+
+  const typeLabel = type === 'job' ? 'Job' : type === 'urgent' ? 'Urgent' : 'Reminder';
+  addMsg(`Got it! ${typeLabel} added to the calendar:`, 'bot', event);
+}
+
+function showWeekSummary() {
+  const t = today();
+  const day = t.getDay();
+  const mon = new Date(t);
+  mon.setDate(t.getDate() - ((day + 6) % 7));
+
+  let lines = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(mon);
+    d.setDate(mon.getDate() + i);
+    const dk = dateKey(d);
+    const events = state.events.filter(e => e.date === dk);
+    const isToday = sameDay(d, t);
+    const dayLabel = DAYS_FULL[d.getDay()];
+    if (events.length > 0) {
+      lines.push(`<strong>${dayLabel}${isToday ? ' (today)' : ''}</strong>`);
+      events.sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+      events.forEach(e => {
+        lines.push(`&nbsp;&nbsp;${e.time ? formatTime(e.time) + ' - ' : ''}${esc(e.title)}`);
+      });
+    } else {
+      lines.push(`<strong>${dayLabel}${isToday ? ' (today)' : ''}</strong> &mdash; free`);
     }
-
-    list.innerHTML = state.goals.map(g => {
-      const pct = Math.min(100, Math.round((g.current / g.target) * 100));
-      return `
-        <li class="goal-item">
-          <div class="goal-header">
-            <span class="goal-name">${esc(g.name)}</span>
-            <span class="goal-pct">${g.current} / ${g.target} (${pct}%)</span>
-          </div>
-          <div class="progress-bar">
-            <div class="progress-fill" style="width:${pct}%"></div>
-          </div>
-          <div class="goal-actions">
-            <button class="secondary" onclick="updateGoal('${g.id}', -1)" style="padding:0.25rem 0.6rem;font-size:0.75rem">-1</button>
-            <button class="secondary" onclick="updateGoal('${g.id}', 1)" style="padding:0.25rem 0.6rem;font-size:0.75rem">+1</button>
-            <button class="secondary" onclick="updateGoal('${g.id}', 5)" style="padding:0.25rem 0.6rem;font-size:0.75rem">+5</button>
-            <button class="danger" onclick="deleteGoal('${g.id}')">remove</button>
-          </div>
-        </li>
-      `;
-    }).join('');
   }
 
-  // ---- Actions ----
-  function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+  addMsg(`Here's your week:<br><br>${lines.join('<br>')}`, 'bot');
+}
 
-  function esc(s) {
-    const d = document.createElement('div');
-    d.textContent = s;
-    return d.innerHTML;
-  }
+function useSuggestion(el) {
+  document.getElementById('chatInput').value = el.textContent;
+  document.getElementById('chatInput').focus();
+}
 
-  document.getElementById('jobForm').addEventListener('submit', e => {
-    e.preventDefault();
-    state.jobs.push({
-      id: uid(),
-      name: document.getElementById('jobName').value.trim(),
-      date: document.getElementById('jobDate').value,
-      time: document.getElementById('jobTime').value,
-      priority: document.getElementById('jobPriority').value,
-      category: document.getElementById('jobCategory').value,
-      notes: document.getElementById('jobNotes').value.trim(),
-      done: false
-    });
-    e.target.reset();
-    document.getElementById('jobDate').value = dateStr(new Date());
-    render();
-  });
+document.getElementById('chatForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  processInput(text);
+});
 
-  document.getElementById('goalForm').addEventListener('submit', e => {
-    e.preventDefault();
-    state.goals.push({
-      id: uid(),
-      name: document.getElementById('goalName').value.trim(),
-      target: parseInt(document.getElementById('goalTarget').value),
-      current: 0
-    });
-    e.target.reset();
-    render();
-  });
-
-  window.toggleJob = function(id) {
-    const job = state.jobs.find(j => j.id === id);
-    if (job) job.done = !job.done;
-    render();
-  };
-
-  window.deleteJob = function(id) {
-    state.jobs = state.jobs.filter(j => j.id !== id);
-    render();
-  };
-
-  window.updateGoal = function(id, delta) {
-    const goal = state.goals.find(g => g.id === id);
-    if (goal) goal.current = Math.max(0, goal.current + delta);
-    render();
-  };
-
-  window.deleteGoal = function(id) {
-    state.goals = state.goals.filter(g => g.id !== id);
-    render();
-  };
-
-  // Filters
-  document.getElementById('filterBar').addEventListener('click', e => {
-    if (e.target.dataset.filter) {
-      currentFilter = e.target.dataset.filter;
-      document.querySelectorAll('#filterBar button').forEach(b => b.classList.remove('active'));
-      e.target.classList.add('active');
-      renderJobs();
-    }
-  });
-
-  // ---- Init ----
-  render();
+// ---- Init ----
+initCal();
 </script>
 
 </body>
