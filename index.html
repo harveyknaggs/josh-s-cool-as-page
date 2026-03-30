@@ -107,13 +107,88 @@
       flex: 1;
       display: grid;
       grid-template-columns: 1fr 380px;
+      grid-template-rows: auto 1fr;
       height: calc(100vh - 56px);
+      overflow-y: auto;
+    }
+
+    .daily-planner {
+      grid-column: 1 / -1;
+      padding: 1.5rem;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+
+    .dp-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+    }
+
+    .dp-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 0.5rem;
+    }
+
+    .dp-day {
+      background: var(--surface2);
+      border-radius: var(--radius);
+      padding: 0.75rem;
+      min-height: 120px;
+    }
+
+    .dp-day.dp-today {
+      background: var(--green-bg);
+      border: 2px solid var(--green);
+    }
+
+    .dp-day-name {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
+    }
+
+    .dp-today .dp-day-name {
+      color: var(--green);
+    }
+
+    .dp-task {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.3rem 0;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .dp-task input[type="checkbox"] {
+      accent-color: var(--green);
+      width: 14px;
+      height: 14px;
+      cursor: pointer;
+    }
+
+    .dp-task.checked label {
+      text-decoration: line-through;
+      color: var(--text-muted);
+    }
+
+    .dp-task label {
+      cursor: pointer;
     }
 
     @media (max-width: 900px) {
       .layout {
         grid-template-columns: 1fr;
-        grid-template-rows: 1fr 1fr;
+        grid-template-rows: auto 1fr 1fr;
+      }
+      .daily-planner { grid-column: 1; }
+      .dp-grid {
+        grid-template-columns: repeat(2, 1fr);
       }
     }
 
@@ -512,6 +587,12 @@
 </nav>
 
 <div class="layout">
+
+  <!-- Daily Planner -->
+  <div class="daily-planner">
+    <div class="dp-title">Daily Planner</div>
+    <div class="dp-grid" id="dpGrid"></div>
+  </div>
 
   <!-- Calendar -->
   <div class="calendar-panel">
@@ -919,7 +1000,81 @@ document.getElementById('chatForm').addEventListener('submit', e => {
   processInput(text);
 });
 
+// ---- Daily Planner ----
+const DAILY_TASKS = [
+  'Gym',
+  'Run',
+  'Schedule the team',
+  'Check emails',
+  'Review job list',
+  'Tool & gear check'
+];
+
+const DP_STORE_KEY = 'josh-daily-planner';
+
+function loadDPState() {
+  try {
+    const s = JSON.parse(localStorage.getItem(DP_STORE_KEY));
+    if (s) return s;
+  } catch {}
+  return {};
+}
+
+function saveDPState(dpState) {
+  localStorage.setItem(DP_STORE_KEY, JSON.stringify(dpState));
+}
+
+function renderDailyPlanner() {
+  const grid = document.getElementById('dpGrid');
+  const t = today();
+  const currentDay = t.getDay();
+  const dpState = loadDPState();
+  const weekKey = getWeekKey();
+
+  const days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+  const dayNums = [1,2,3,4,5,6,0];
+
+  let html = '';
+  days.forEach((dayName, i) => {
+    const isToday = dayNums[i] === currentDay;
+    const dayKey = weekKey + '-' + i;
+
+    html += `<div class="dp-day ${isToday ? 'dp-today' : ''}">`;
+    html += `<div class="dp-day-name">${dayName}${isToday ? ' (Today)' : ''}</div>`;
+
+    DAILY_TASKS.forEach((task, ti) => {
+      const checkKey = dayKey + '-' + ti;
+      const checked = dpState[checkKey] || false;
+      html += `<div class="dp-task ${checked ? 'checked' : ''}">
+        <input type="checkbox" id="${checkKey}" ${checked ? 'checked' : ''} onchange="toggleDPTask('${checkKey}', this)">
+        <label for="${checkKey}">${esc(task)}</label>
+      </div>`;
+    });
+
+    html += '</div>';
+  });
+
+  grid.innerHTML = html;
+}
+
+function getWeekKey() {
+  const t = today();
+  const day = t.getDay();
+  const mon = new Date(t);
+  mon.setDate(t.getDate() - ((day + 6) % 7));
+  return dateKey(mon);
+}
+
+function toggleDPTask(key, el) {
+  const dpState = loadDPState();
+  dpState[key] = el.checked;
+  saveDPState(dpState);
+  const taskDiv = el.closest('.dp-task');
+  taskDiv.classList.toggle('checked', el.checked);
+}
+
 // ---- Init ----
+renderDailyPlanner();
 initCal();
 </script>
 
