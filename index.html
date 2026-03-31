@@ -241,10 +241,12 @@
       gap: 0.4rem;
       margin-top: 0.5rem;
       padding-left: 0.5rem;
+      flex-wrap: wrap;
     }
 
-    .dp-add-form input {
+    .dp-add-form input[type="text"] {
       flex: 1;
+      min-width: 100px;
       padding: 0.35rem 0.6rem;
       border: 1px solid var(--border);
       border-radius: 6px;
@@ -255,8 +257,8 @@
       color: var(--text);
     }
 
-    .dp-add-form input:focus { border-color: var(--green); }
-    .dp-add-form input::placeholder { color: var(--text-muted); }
+    .dp-add-form input[type="text"]:focus { border-color: var(--green); }
+    .dp-add-form input[type="text"]::placeholder { color: var(--text-muted); }
 
     .dp-add-form button {
       padding: 0.35rem 0.65rem;
@@ -272,6 +274,29 @@
     }
 
     .dp-add-form button:hover { background: #15803d; }
+
+    .dp-add-row {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      width: 100%;
+      margin-top: 0.25rem;
+    }
+
+    .dp-add-row label {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .dp-add-row input[type="checkbox"] {
+      accent-color: var(--green);
+      width: 12px;
+      height: 12px;
+    }
 
     @media (max-width: 900px) {
       .layout {
@@ -1098,10 +1123,11 @@ document.getElementById('chatForm').addEventListener('submit', e => {
 });
 
 // ---- Daily Planner ----
+// Default tasks appear on every day, every week
 const DEFAULT_TASKS = ['Gym', 'Run', 'Schedule the team', 'Check emails', 'Review job list', 'Tool & gear check'];
 
-const DP_STORE_KEY = 'josh-daily-planner';
-const DP_TASKS_KEY = 'josh-daily-tasks';
+const DP_STORE_KEY = 'josh-daily-planner';     // checkbox state per week
+const DP_DAYTASKS_KEY = 'josh-daily-daytasks'; // per-day task overrides
 const DP_DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const DP_DAYS_FULL = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 let dpSelectedDay = today().getDay();
@@ -1115,13 +1141,27 @@ function saveDPState(dpState) {
   localStorage.setItem(DP_STORE_KEY, JSON.stringify(dpState));
 }
 
-function loadDPTasks() {
-  try { const s = JSON.parse(localStorage.getItem(DP_TASKS_KEY)); if (Array.isArray(s)) return s; } catch {}
+// Per-day task lists: { "0": [...], "1": [...], ... }
+// Each day stores its own array. If a day has no entry, it uses DEFAULT_TASKS.
+function loadDayTasks() {
+  try { const s = JSON.parse(localStorage.getItem(DP_DAYTASKS_KEY)); if (s) return s; } catch {}
+  return {};
+}
+
+function saveDayTasks(dt) {
+  localStorage.setItem(DP_DAYTASKS_KEY, JSON.stringify(dt));
+}
+
+function getTasksForDay(dayNum) {
+  const dt = loadDayTasks();
+  if (dt[dayNum] !== undefined) return dt[dayNum];
   return [...DEFAULT_TASKS];
 }
 
-function saveDPTasks(tasks) {
-  localStorage.setItem(DP_TASKS_KEY, JSON.stringify(tasks));
+function setTasksForDay(dayNum, tasks) {
+  const dt = loadDayTasks();
+  dt[dayNum] = tasks;
+  saveDayTasks(dt);
 }
 
 function renderDPTabs() {
@@ -1140,7 +1180,7 @@ function renderDPTabs() {
 function renderDPTasks() {
   const container = document.getElementById('dpTasks');
   const dpState = loadDPState();
-  const tasks = loadDPTasks();
+  const tasks = getTasksForDay(dpSelectedDay);
   const weekKey = getWeekKey();
   const dayKey = weekKey + '-' + dpSelectedDay;
 
@@ -1158,6 +1198,9 @@ function renderDPTasks() {
   html += `<form class="dp-add-form" onsubmit="addDPTask(event)">
     <input type="text" placeholder="Add a task..." id="dpAddInput">
     <button type="submit">Add</button>
+    <div class="dp-add-row">
+      <label><input type="checkbox" id="dpAddAllDays"> Add to all days</label>
+    </div>
   </form>`;
 
   container.innerHTML = html;
@@ -1188,18 +1231,28 @@ function toggleDPTask(key, el) {
 function addDPTask(e) {
   e.preventDefault();
   const input = document.getElementById('dpAddInput');
+  const allDays = document.getElementById('dpAddAllDays');
   const text = input.value.trim();
   if (!text) return;
-  const tasks = loadDPTasks();
-  tasks.push(text);
-  saveDPTasks(tasks);
+
+  if (allDays && allDays.checked) {
+    for (let i = 0; i < 7; i++) {
+      const tasks = getTasksForDay(i);
+      tasks.push(text);
+      setTasksForDay(i, tasks);
+    }
+  } else {
+    const tasks = getTasksForDay(dpSelectedDay);
+    tasks.push(text);
+    setTasksForDay(dpSelectedDay, tasks);
+  }
   renderDPTasks();
 }
 
 function deleteDPTask(index) {
-  const tasks = loadDPTasks();
+  const tasks = getTasksForDay(dpSelectedDay);
   tasks.splice(index, 1);
-  saveDPTasks(tasks);
+  setTasksForDay(dpSelectedDay, tasks);
   renderDPTasks();
 }
 
