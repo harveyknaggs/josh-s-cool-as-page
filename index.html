@@ -107,49 +107,84 @@
       flex: 1;
       display: grid;
       grid-template-columns: 1fr 380px;
-      grid-template-rows: auto 1fr;
+      grid-template-rows: 1fr;
       height: calc(100vh - 56px);
+      overflow: hidden;
+    }
+
+    .left-col {
+      display: flex;
+      flex-direction: column;
       overflow-y: auto;
     }
 
+    .right-col {
+      display: flex;
+      flex-direction: column;
+      border-left: 1px solid var(--border);
+      overflow: hidden;
+    }
+
+    /* ---- DAILY PLANNER ---- */
     .daily-planner {
-      grid-column: 1 / -1;
-      padding: 1.5rem;
+      padding: 1.25rem;
       border-bottom: 1px solid var(--border);
       background: var(--surface);
     }
 
+    .dp-header {
+      display: flex;
+      align-items: baseline;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+    }
+
     .dp-title {
-      font-size: 1.1rem;
+      font-size: 1rem;
       font-weight: 700;
-      margin-bottom: 1rem;
     }
 
-    .dp-grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      max-width: 400px;
+    .dp-tabs {
+      display: flex;
+      gap: 0.25rem;
+      align-items: baseline;
     }
 
-    .dp-day {
-      background: var(--green-bg);
-      border: 2px solid var(--green);
-      border-radius: var(--radius);
-      padding: 0.75rem;
+    .dp-tab {
+      padding: 0.25rem 0.5rem;
+      font-size: 0.7rem;
+      border: none;
+      background: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-radius: 6px;
+      font-family: inherit;
+      font-weight: 500;
+      transition: all 0.15s;
     }
 
-    .dp-day-name {
+    .dp-tab:hover {
+      background: var(--surface2);
+      color: var(--text-secondary);
+    }
+
+    .dp-tab.active {
+      background: var(--green);
+      color: #fff;
       font-size: 0.85rem;
       font-weight: 700;
-      color: var(--green);
-      margin-bottom: 0.5rem;
+      padding: 0.3rem 0.65rem;
+    }
+
+    .dp-tasks {
+      padding-left: 0.25rem;
     }
 
     .dp-task {
       display: flex;
       align-items: center;
       gap: 0.4rem;
-      padding: 0.25rem 0 0.25rem 0.5rem;
+      padding: 0.3rem 0 0.3rem 0.5rem;
       font-size: 0.8rem;
       color: var(--text-secondary);
       position: relative;
@@ -181,12 +216,9 @@
     @media (max-width: 900px) {
       .layout {
         grid-template-columns: 1fr;
-        grid-template-rows: auto 1fr 1fr;
+        height: auto;
       }
-      .daily-planner { grid-column: 1; }
-      .dp-grid {
-        grid-template-columns: repeat(2, 1fr);
-      }
+      .right-col { border-left: none; border-top: 1px solid var(--border); height: 50vh; }
     }
 
     /* ---- CALENDAR ---- */
@@ -424,11 +456,11 @@
 
     /* ---- CHAT ---- */
     .chat-panel {
-      border-left: 1px solid var(--border);
       display: flex;
       flex-direction: column;
       background: var(--surface);
-      height: calc(100vh - 56px);
+      flex: 1;
+      overflow: hidden;
     }
 
     .chat-header {
@@ -585,34 +617,41 @@
 
 <div class="layout">
 
-  <!-- Daily Planner -->
-  <div class="daily-planner">
-    <div class="dp-title">Daily Planner</div>
-    <div class="dp-grid" id="dpGrid"></div>
-  </div>
-
-  <!-- Calendar -->
-  <div class="calendar-panel">
-    <div class="cal-header">
-      <div class="cal-title" id="calTitle"></div>
-      <div class="cal-nav">
-        <button onclick="changeMonth(-1)">&#8249;</button>
-        <button onclick="goToday()" style="font-size:0.75rem;width:auto;padding:0 12px">Today</button>
-        <button onclick="changeMonth(1)">&#8250;</button>
+  <!-- Left Column: Calendar -->
+  <div class="left-col">
+    <div class="calendar-panel">
+      <div class="cal-header">
+        <div class="cal-title" id="calTitle"></div>
+        <div class="cal-nav">
+          <button onclick="changeMonth(-1)">&#8249;</button>
+          <button onclick="goToday()" style="font-size:0.75rem;width:auto;padding:0 12px">Today</button>
+          <button onclick="changeMonth(1)">&#8250;</button>
+        </div>
       </div>
-    </div>
-    <div class="cal-grid" id="calGrid"></div>
-    <div class="day-detail" id="dayDetail">
-      <div class="day-detail-header">
-        <div class="day-detail-title" id="dayDetailTitle"></div>
-        <button class="close-btn" onclick="closeDayDetail()">&times;</button>
+      <div class="cal-grid" id="calGrid"></div>
+      <div class="day-detail" id="dayDetail">
+        <div class="day-detail-header">
+          <div class="day-detail-title" id="dayDetailTitle"></div>
+          <button class="close-btn" onclick="closeDayDetail()">&times;</button>
+        </div>
+        <div id="dayDetailList"></div>
       </div>
-      <div id="dayDetailList"></div>
     </div>
   </div>
 
-  <!-- Chat -->
-  <div class="chat-panel">
+  <!-- Right Column: Daily Planner + Crew Assistant -->
+  <div class="right-col">
+    <!-- Daily Planner -->
+    <div class="daily-planner">
+      <div class="dp-header">
+        <div class="dp-title">Daily Tasks</div>
+        <div class="dp-tabs" id="dpTabs"></div>
+      </div>
+      <div class="dp-tasks" id="dpTasks"></div>
+    </div>
+
+    <!-- Chat -->
+    <div class="chat-panel">
     <div class="chat-header">
       <h2>Josh's Landscaping Assistant</h2>
       <p>Your smart scheduling helper for jobs, reminders, and more</p>
@@ -638,6 +677,7 @@
         <span class="suggestion" onclick="useSuggestion(this)">Show my week</span>
       </div>
     </div>
+  </div>
   </div>
 
 </div>
@@ -1008,6 +1048,9 @@ const DAILY_TASKS = [
 ];
 
 const DP_STORE_KEY = 'josh-daily-planner';
+const DP_DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const DP_DAYS_FULL = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+let dpSelectedDay = today().getDay();
 
 function loadDPState() {
   try {
@@ -1021,20 +1064,26 @@ function saveDPState(dpState) {
   localStorage.setItem(DP_STORE_KEY, JSON.stringify(dpState));
 }
 
-function renderDailyPlanner() {
-  const grid = document.getElementById('dpGrid');
-  const t = today();
-  const currentDay = t.getDay();
+function renderDPTabs() {
+  const tabs = document.getElementById('dpTabs');
+  const currentDay = today().getDay();
+  let html = '';
+  for (let i = 0; i < 7; i++) {
+    const isToday = i === currentDay;
+    const isSelected = i === dpSelectedDay;
+    const label = isToday ? DP_DAYS_FULL[i] : DP_DAYS[i];
+    html += `<button class="dp-tab ${isSelected ? 'active' : ''}" onclick="selectDPDay(${i})">${label}</button>`;
+  }
+  tabs.innerHTML = html;
+}
+
+function renderDPTasks() {
+  const container = document.getElementById('dpTasks');
   const dpState = loadDPState();
   const weekKey = getWeekKey();
+  const dayKey = weekKey + '-' + dpSelectedDay;
 
-  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-  const dayName = days[currentDay];
-  const dayKey = weekKey + '-' + currentDay;
-
-  let html = `<div class="dp-day">`;
-  html += `<div class="dp-day-name">${dayName}</div>`;
-
+  let html = '';
   DAILY_TASKS.forEach((task, ti) => {
     const checkKey = dayKey + '-' + ti;
     const checked = dpState[checkKey] || false;
@@ -1043,9 +1092,13 @@ function renderDailyPlanner() {
       <label for="${checkKey}">${esc(task)}</label>
     </div>`;
   });
+  container.innerHTML = html;
+}
 
-  html += '</div>';
-  grid.innerHTML = html;
+function selectDPDay(dayNum) {
+  dpSelectedDay = dayNum;
+  renderDPTabs();
+  renderDPTasks();
 }
 
 function getWeekKey() {
@@ -1065,7 +1118,8 @@ function toggleDPTask(key, el) {
 }
 
 // ---- Init ----
-renderDailyPlanner();
+renderDPTabs();
+renderDPTasks();
 initCal();
 </script>
 
