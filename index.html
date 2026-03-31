@@ -127,42 +127,39 @@
 
     .dp-grid {
       display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 0.5rem;
+      grid-template-columns: 1fr;
+      max-width: 400px;
     }
 
     .dp-day {
-      background: var(--surface2);
-      border-radius: var(--radius);
-      padding: 0.75rem;
-      min-height: 120px;
-    }
-
-    .dp-day.dp-today {
       background: var(--green-bg);
       border: 2px solid var(--green);
+      border-radius: var(--radius);
+      padding: 0.75rem;
     }
 
     .dp-day-name {
-      font-size: 0.75rem;
+      font-size: 0.85rem;
       font-weight: 700;
-      text-transform: uppercase;
-      color: var(--text-muted);
-      letter-spacing: 0.05em;
-      margin-bottom: 0.5rem;
-    }
-
-    .dp-today .dp-day-name {
       color: var(--green);
+      margin-bottom: 0.5rem;
     }
 
     .dp-task {
       display: flex;
       align-items: center;
       gap: 0.4rem;
-      padding: 0.3rem 0;
-      font-size: 0.75rem;
+      padding: 0.25rem 0 0.25rem 0.5rem;
+      font-size: 0.8rem;
       color: var(--text-secondary);
+      position: relative;
+    }
+
+    .dp-task::before {
+      content: '\2022';
+      color: var(--green);
+      font-size: 1.1rem;
+      line-height: 1;
     }
 
     .dp-task input[type="checkbox"] {
@@ -1031,29 +1028,23 @@ function renderDailyPlanner() {
   const dpState = loadDPState();
   const weekKey = getWeekKey();
 
-  const days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
-  const dayNums = [1,2,3,4,5,6,0];
+  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const dayName = days[currentDay];
+  const dayKey = weekKey + '-' + currentDay;
 
-  let html = '';
-  days.forEach((dayName, i) => {
-    const isToday = dayNums[i] === currentDay;
-    const dayKey = weekKey + '-' + i;
+  let html = `<div class="dp-day">`;
+  html += `<div class="dp-day-name">${dayName}</div>`;
 
-    html += `<div class="dp-day ${isToday ? 'dp-today' : ''}">`;
-    html += `<div class="dp-day-name">${dayName}${isToday ? ' (Today)' : ''}</div>`;
-
-    DAILY_TASKS.forEach((task, ti) => {
-      const checkKey = dayKey + '-' + ti;
-      const checked = dpState[checkKey] || false;
-      html += `<div class="dp-task ${checked ? 'checked' : ''}">
-        <input type="checkbox" id="${checkKey}" ${checked ? 'checked' : ''} onchange="toggleDPTask('${checkKey}', this)">
-        <label for="${checkKey}">${esc(task)}</label>
-      </div>`;
-    });
-
-    html += '</div>';
+  DAILY_TASKS.forEach((task, ti) => {
+    const checkKey = dayKey + '-' + ti;
+    const checked = dpState[checkKey] || false;
+    html += `<div class="dp-task ${checked ? 'checked' : ''}">
+      <input type="checkbox" id="${checkKey}" ${checked ? 'checked' : ''} onchange="toggleDPTask('${checkKey}', this)">
+      <label for="${checkKey}">${esc(task)}</label>
+    </div>`;
   });
 
+  html += '</div>';
   grid.innerHTML = html;
 }
 
