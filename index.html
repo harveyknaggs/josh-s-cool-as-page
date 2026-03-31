@@ -134,8 +134,8 @@
 
     .dp-header {
       display: flex;
-      align-items: baseline;
-      gap: 0.75rem;
+      flex-direction: column;
+      gap: 0.5rem;
       margin-bottom: 0.75rem;
     }
 
@@ -146,8 +146,9 @@
 
     .dp-tabs {
       display: flex;
-      gap: 0.25rem;
-      align-items: baseline;
+      gap: 0.3rem;
+      align-items: center;
+      flex-wrap: wrap;
     }
 
     .dp-tab {
@@ -211,7 +212,66 @@
 
     .dp-task label {
       cursor: pointer;
+      flex: 1;
     }
+
+    .dp-task-delete {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 0.9rem;
+      padding: 0 0.2rem;
+      border-radius: 4px;
+      transition: all 0.15s;
+      opacity: 0;
+    }
+
+    .dp-task:hover .dp-task-delete {
+      opacity: 1;
+    }
+
+    .dp-task-delete:hover {
+      color: var(--red);
+      background: var(--red-light);
+    }
+
+    .dp-add-form {
+      display: flex;
+      gap: 0.4rem;
+      margin-top: 0.5rem;
+      padding-left: 0.5rem;
+    }
+
+    .dp-add-form input {
+      flex: 1;
+      padding: 0.35rem 0.6rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-family: inherit;
+      outline: none;
+      background: var(--surface2);
+      color: var(--text);
+    }
+
+    .dp-add-form input:focus { border-color: var(--green); }
+    .dp-add-form input::placeholder { color: var(--text-muted); }
+
+    .dp-add-form button {
+      padding: 0.35rem 0.65rem;
+      border: none;
+      background: var(--green);
+      color: #fff;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.15s;
+    }
+
+    .dp-add-form button:hover { background: #15803d; }
 
     @media (max-width: 900px) {
       .layout {
@@ -1038,30 +1098,30 @@ document.getElementById('chatForm').addEventListener('submit', e => {
 });
 
 // ---- Daily Planner ----
-const DAILY_TASKS = [
-  'Gym',
-  'Run',
-  'Schedule the team',
-  'Check emails',
-  'Review job list',
-  'Tool & gear check'
-];
+const DEFAULT_TASKS = ['Gym', 'Run', 'Schedule the team', 'Check emails', 'Review job list', 'Tool & gear check'];
 
 const DP_STORE_KEY = 'josh-daily-planner';
+const DP_TASKS_KEY = 'josh-daily-tasks';
 const DP_DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const DP_DAYS_FULL = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 let dpSelectedDay = today().getDay();
 
 function loadDPState() {
-  try {
-    const s = JSON.parse(localStorage.getItem(DP_STORE_KEY));
-    if (s) return s;
-  } catch {}
+  try { const s = JSON.parse(localStorage.getItem(DP_STORE_KEY)); if (s) return s; } catch {}
   return {};
 }
 
 function saveDPState(dpState) {
   localStorage.setItem(DP_STORE_KEY, JSON.stringify(dpState));
+}
+
+function loadDPTasks() {
+  try { const s = JSON.parse(localStorage.getItem(DP_TASKS_KEY)); if (Array.isArray(s)) return s; } catch {}
+  return [...DEFAULT_TASKS];
+}
+
+function saveDPTasks(tasks) {
+  localStorage.setItem(DP_TASKS_KEY, JSON.stringify(tasks));
 }
 
 function renderDPTabs() {
@@ -1080,18 +1140,26 @@ function renderDPTabs() {
 function renderDPTasks() {
   const container = document.getElementById('dpTasks');
   const dpState = loadDPState();
+  const tasks = loadDPTasks();
   const weekKey = getWeekKey();
   const dayKey = weekKey + '-' + dpSelectedDay;
 
   let html = '';
-  DAILY_TASKS.forEach((task, ti) => {
+  tasks.forEach((task, ti) => {
     const checkKey = dayKey + '-' + ti;
     const checked = dpState[checkKey] || false;
     html += `<div class="dp-task ${checked ? 'checked' : ''}">
       <input type="checkbox" id="${checkKey}" ${checked ? 'checked' : ''} onchange="toggleDPTask('${checkKey}', this)">
       <label for="${checkKey}">${esc(task)}</label>
+      <button class="dp-task-delete" onclick="deleteDPTask(${ti})" title="Remove">&times;</button>
     </div>`;
   });
+
+  html += `<form class="dp-add-form" onsubmit="addDPTask(event)">
+    <input type="text" placeholder="Add a task..." id="dpAddInput">
+    <button type="submit">Add</button>
+  </form>`;
+
   container.innerHTML = html;
 }
 
@@ -1115,6 +1183,24 @@ function toggleDPTask(key, el) {
   saveDPState(dpState);
   const taskDiv = el.closest('.dp-task');
   taskDiv.classList.toggle('checked', el.checked);
+}
+
+function addDPTask(e) {
+  e.preventDefault();
+  const input = document.getElementById('dpAddInput');
+  const text = input.value.trim();
+  if (!text) return;
+  const tasks = loadDPTasks();
+  tasks.push(text);
+  saveDPTasks(tasks);
+  renderDPTasks();
+}
+
+function deleteDPTask(index) {
+  const tasks = loadDPTasks();
+  tasks.splice(index, 1);
+  saveDPTasks(tasks);
+  renderDPTasks();
 }
 
 // ---- Init ----
