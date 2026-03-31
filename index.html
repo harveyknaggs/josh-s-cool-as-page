@@ -1171,7 +1171,7 @@ function renderDPTabs() {
   for (let i = 0; i < 7; i++) {
     const isToday = i === currentDay;
     const isSelected = i === dpSelectedDay;
-    const label = isToday ? DP_DAYS_FULL[i] : DP_DAYS[i];
+    const label = (isToday ? DP_DAYS_FULL[i] : DP_DAYS[i]) + (isToday ? ' (Today)' : '');
     html += `<button class="dp-tab ${isSelected ? 'active' : ''}" onclick="selectDPDay(${i})">${label}</button>`;
   }
   tabs.innerHTML = html;
