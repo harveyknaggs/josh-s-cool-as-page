@@ -780,6 +780,115 @@
     }
 
     .todo-add-form button:hover { background: #15803d; }
+
+    .todo-progress {
+      margin-top: 0.75rem;
+      padding-top: 0.6rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .todo-progress-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.35rem;
+    }
+
+    .todo-progress-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .todo-progress-count {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+
+    .todo-progress-bar {
+      width: 100%;
+      height: 12px;
+      background: var(--surface2);
+      border-radius: 6px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .todo-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #16a34a, #22d3ee, #a855f7);
+      border-radius: 6px;
+      transition: width 0.5s ease;
+      position: relative;
+    }
+
+    .todo-progress-fill.complete {
+      background: linear-gradient(90deg, #f59e0b, #ef4444, #8b5cf6, #16a34a);
+      background-size: 300% 100%;
+      animation: rainbow 2s linear infinite;
+    }
+
+    @keyframes rainbow {
+      0% { background-position: 0% 50%; }
+      100% { background-position: 300% 50%; }
+    }
+
+    .todo-milestone {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      margin-top: 0.25rem;
+    }
+
+    .todo-milestone span {
+      color: var(--green);
+      font-weight: 600;
+    }
+
+    /* ---- 1500 Celebration ---- */
+    .celebration-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      z-index: 9999;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      gap: 1.5rem;
+      cursor: pointer;
+    }
+
+    .celebration-overlay.show {
+      display: flex;
+    }
+
+    .celebration-text {
+      font-size: 3rem;
+      font-weight: 800;
+      color: #fff;
+      text-align: center;
+      line-height: 1.3;
+      text-shadow: 0 0 40px rgba(255,215,0,0.6);
+      animation: glow 2s ease-in-out infinite alternate;
+    }
+
+    .celebration-sub {
+      font-size: 1.2rem;
+      color: #fbbf24;
+      text-align: center;
+      font-weight: 500;
+    }
+
+    .celebration-dismiss {
+      font-size: 0.8rem;
+      color: rgba(255,255,255,0.4);
+      margin-top: 1rem;
+    }
+
+    @keyframes glow {
+      from { text-shadow: 0 0 20px rgba(255,215,0,0.4); }
+      to { text-shadow: 0 0 60px rgba(255,215,0,0.8), 0 0 100px rgba(255,215,0,0.3); }
+    }
   </style>
 </head>
 <body>
@@ -810,6 +919,7 @@
         <input type="text" placeholder="Add something to do..." id="todoAddInput">
         <button type="submit">Add</button>
       </form>
+      <div class="todo-progress" id="todoProgress"></div>
     </div>
 
     <div class="calendar-panel">
@@ -1367,6 +1477,8 @@ function deleteDPTask(index) {
 
 // ---- To Do List ----
 const TODO_STORE_KEY = 'josh-todo-list';
+const TODO_DONE_KEY = 'josh-todo-done-count';
+const TODO_GOAL = 1500;
 
 function loadTodos() {
   try { const s = JSON.parse(localStorage.getItem(TODO_STORE_KEY)); if (Array.isArray(s)) return s; } catch {}
@@ -1377,23 +1489,66 @@ function saveTodos(todos) {
   localStorage.setItem(TODO_STORE_KEY, JSON.stringify(todos));
 }
 
+function loadDoneCount() {
+  return parseInt(localStorage.getItem(TODO_DONE_KEY) || '0', 10);
+}
+
+function saveDoneCount(n) {
+  localStorage.setItem(TODO_DONE_KEY, String(n));
+}
+
 function renderTodos() {
   const container = document.getElementById('todoItems');
   const todos = loadTodos();
 
   if (todos.length === 0) {
     container.innerHTML = '<div class="todo-empty">Nothing on the list. Nice one!</div>';
-    return;
+  } else {
+    let html = '';
+    todos.forEach((item, i) => {
+      html += `<div class="todo-item" id="todo-${i}">
+        <input type="checkbox" onchange="completeTodo(${i})">
+        <label>${esc(item)}</label>
+      </div>`;
+    });
+    container.innerHTML = html;
   }
 
-  let html = '';
-  todos.forEach((item, i) => {
-    html += `<div class="todo-item" id="todo-${i}">
-      <input type="checkbox" onchange="completeTodo(${i})">
-      <label>${esc(item)}</label>
-    </div>`;
-  });
-  container.innerHTML = html;
+  renderTodoProgress();
+}
+
+function renderTodoProgress() {
+  const container = document.getElementById('todoProgress');
+  const done = loadDoneCount();
+  const pct = Math.min((done / TODO_GOAL) * 100, 100);
+  const isComplete = done >= TODO_GOAL;
+
+  const milestones = [100, 250, 500, 750, 1000, 1250, 1500];
+  const nextMilestone = milestones.find(m => m > done) || TODO_GOAL;
+  const toNext = nextMilestone - done;
+
+  let motivationMsg = '';
+  if (done === 0) motivationMsg = 'Get started, legend!';
+  else if (done < 50) motivationMsg = 'Off to a solid start!';
+  else if (done < 100) motivationMsg = 'Building momentum!';
+  else if (done < 250) motivationMsg = 'Absolute machine!';
+  else if (done < 500) motivationMsg = 'Halfway to 500, keep pushing!';
+  else if (done < 750) motivationMsg = 'Over 500 - unstoppable!';
+  else if (done < 1000) motivationMsg = 'Beast mode activated!';
+  else if (done < 1250) motivationMsg = '1000+ done. Legendary stuff!';
+  else if (done < 1500) motivationMsg = 'So close to 1,500!';
+  else motivationMsg = 'You did it. Incredible.';
+
+  container.innerHTML = `
+    <div class="todo-progress-header">
+      <div class="todo-progress-label">${motivationMsg}</div>
+      <div class="todo-progress-count">${done.toLocaleString()} / ${TODO_GOAL.toLocaleString()}</div>
+    </div>
+    <div class="todo-progress-bar">
+      <div class="todo-progress-fill ${isComplete ? 'complete' : ''}" style="width:${pct}%"></div>
+    </div>
+    ${!isComplete ? `<div class="todo-milestone"><span>${toNext}</span> more to next milestone (${nextMilestone.toLocaleString()})</div>` : ''}
+  `;
 }
 
 function addTodo(e) {
@@ -1415,7 +1570,15 @@ function completeTodo(index) {
     const todos = loadTodos();
     todos.splice(index, 1);
     saveTodos(todos);
+
+    const done = loadDoneCount() + 1;
+    saveDoneCount(done);
+
     renderTodos();
+
+    if (done === TODO_GOAL) {
+      document.getElementById('celebrationOverlay').classList.add('show');
+    }
   }, 300);
 }
 
@@ -1425,6 +1588,12 @@ renderDPTabs();
 renderDPTasks();
 initCal();
 </script>
+
+<div class="celebration-overlay" id="celebrationOverlay" onclick="this.classList.remove('show')">
+  <div class="celebration-text">Thank God for<br>everything He's done</div>
+  <div class="celebration-sub">1,500 tasks completed. You're a machine, Josh.</div>
+  <div class="celebration-dismiss">click anywhere to close</div>
+</div>
 
 </body>
 </html>
