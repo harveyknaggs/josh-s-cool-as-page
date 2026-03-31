@@ -177,6 +177,16 @@
       padding: 0.3rem 0.65rem;
     }
 
+    .dp-tab-today {
+      display: block;
+      font-size: 0.55rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      opacity: 0.85;
+      margin-top: 0.1rem;
+    }
+
     .dp-tasks {
       padding-left: 0.25rem;
     }
@@ -1171,8 +1181,9 @@ function renderDPTabs() {
   for (let i = 0; i < 7; i++) {
     const isToday = i === currentDay;
     const isSelected = i === dpSelectedDay;
-    const label = (isToday ? DP_DAYS_FULL[i] : DP_DAYS[i]) + (isToday ? ' (Today)' : '');
-    html += `<button class="dp-tab ${isSelected ? 'active' : ''}" onclick="selectDPDay(${i})">${label}</button>`;
+    const dayLabel = isToday ? DP_DAYS_FULL[i] : DP_DAYS[i];
+    const todayTag = isToday ? '<span class="dp-tab-today">Today</span>' : '';
+    html += `<button class="dp-tab ${isSelected ? 'active' : ''}" onclick="selectDPDay(${i})">${dayLabel}${todayTag}</button>`;
   }
   tabs.innerHTML = html;
 }
