@@ -692,6 +692,94 @@
       border-color: var(--green);
       color: var(--green);
     }
+
+    /* ---- TO DO LIST ---- */
+    .todo-panel {
+      padding: 1.25rem;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+
+    .todo-title {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+    }
+
+    .todo-items {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.15rem 1.5rem;
+    }
+
+    .todo-item {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.3rem 0;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+
+    .todo-item input[type="checkbox"] {
+      accent-color: var(--green);
+      width: 14px;
+      height: 14px;
+      cursor: pointer;
+    }
+
+    .todo-item label {
+      cursor: pointer;
+      flex: 1;
+    }
+
+    .todo-item.removing {
+      opacity: 0;
+      transform: translateX(-10px);
+      transition: all 0.3s ease;
+    }
+
+    .todo-empty {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      padding: 0.5rem 0;
+    }
+
+    .todo-add-form {
+      display: flex;
+      gap: 0.4rem;
+      margin-top: 0.6rem;
+    }
+
+    .todo-add-form input {
+      flex: 1;
+      padding: 0.35rem 0.6rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-family: inherit;
+      outline: none;
+      background: var(--surface2);
+      color: var(--text);
+    }
+
+    .todo-add-form input:focus { border-color: var(--green); }
+    .todo-add-form input::placeholder { color: var(--text-muted); }
+
+    .todo-add-form button {
+      padding: 0.35rem 0.65rem;
+      border: none;
+      background: var(--green);
+      color: #fff;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.15s;
+    }
+
+    .todo-add-form button:hover { background: #15803d; }
   </style>
 </head>
 <body>
@@ -712,8 +800,18 @@
 
 <div class="layout">
 
-  <!-- Left Column: Calendar -->
+  <!-- Left Column: To Do + Calendar -->
   <div class="left-col">
+    <!-- To Do List -->
+    <div class="todo-panel">
+      <div class="todo-title">To Do List</div>
+      <div class="todo-items" id="todoItems"></div>
+      <form class="todo-add-form" onsubmit="addTodo(event)">
+        <input type="text" placeholder="Add something to do..." id="todoAddInput">
+        <button type="submit">Add</button>
+      </form>
+    </div>
+
     <div class="calendar-panel">
       <div class="cal-header">
         <div class="cal-title" id="calTitle"></div>
@@ -1267,7 +1365,62 @@ function deleteDPTask(index) {
   renderDPTasks();
 }
 
+// ---- To Do List ----
+const TODO_STORE_KEY = 'josh-todo-list';
+
+function loadTodos() {
+  try { const s = JSON.parse(localStorage.getItem(TODO_STORE_KEY)); if (Array.isArray(s)) return s; } catch {}
+  return [];
+}
+
+function saveTodos(todos) {
+  localStorage.setItem(TODO_STORE_KEY, JSON.stringify(todos));
+}
+
+function renderTodos() {
+  const container = document.getElementById('todoItems');
+  const todos = loadTodos();
+
+  if (todos.length === 0) {
+    container.innerHTML = '<div class="todo-empty">Nothing on the list. Nice one!</div>';
+    return;
+  }
+
+  let html = '';
+  todos.forEach((item, i) => {
+    html += `<div class="todo-item" id="todo-${i}">
+      <input type="checkbox" onchange="completeTodo(${i})">
+      <label>${esc(item)}</label>
+    </div>`;
+  });
+  container.innerHTML = html;
+}
+
+function addTodo(e) {
+  e.preventDefault();
+  const input = document.getElementById('todoAddInput');
+  const text = input.value.trim();
+  if (!text) return;
+  const todos = loadTodos();
+  todos.push(text);
+  saveTodos(todos);
+  input.value = '';
+  renderTodos();
+}
+
+function completeTodo(index) {
+  const el = document.getElementById('todo-' + index);
+  el.classList.add('removing');
+  setTimeout(() => {
+    const todos = loadTodos();
+    todos.splice(index, 1);
+    saveTodos(todos);
+    renderTodos();
+  }, 300);
+}
+
 // ---- Init ----
+renderTodos();
 renderDPTabs();
 renderDPTasks();
 initCal();
