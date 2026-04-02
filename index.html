@@ -115,7 +115,7 @@
     .top-row {
       grid-column: 1 / -1;
       display: grid;
-      grid-template-columns: 1fr 380px;
+      grid-template-columns: 1fr 1fr 1fr;
       border-bottom: 1px solid var(--border);
     }
 
@@ -135,7 +135,6 @@
     /* ---- DAILY PLANNER ---- */
     .daily-planner {
       padding: 1.25rem;
-      border-bottom: 1px solid var(--border);
       background: var(--surface);
     }
 
@@ -704,7 +703,7 @@
     .todo-panel {
       padding: 1.25rem;
       background: var(--surface);
-      border-left: 1px solid var(--border);
+      border-right: 1px solid var(--border);
     }
 
     .todo-title {
@@ -901,6 +900,7 @@
     .goals-panel {
       padding: 1.25rem;
       background: var(--surface);
+      border-right: 1px solid var(--border);
     }
 
     .goals-title {
@@ -1008,7 +1008,7 @@
 
 <div class="layout">
 
-  <!-- Top Row: Goals + To Do List -->
+  <!-- Top Row: Goals + To Do List + Daily Planner -->
   <div class="top-row">
     <div class="goals-panel">
       <div class="goals-title">Goals</div>
@@ -1026,6 +1026,13 @@
         <button type="submit">Add</button>
       </form>
       <div class="todo-progress" id="todoProgress"></div>
+    </div>
+    <div class="daily-planner">
+      <div class="dp-header">
+        <div class="dp-title">Daily Tasks</div>
+        <div class="dp-tabs" id="dpTabs"></div>
+      </div>
+      <div class="dp-tasks" id="dpTasks"></div>
     </div>
   </div>
 
@@ -1051,18 +1058,8 @@
     </div>
   </div>
 
-  <!-- Right Column: Daily Planner + Crew Assistant -->
+  <!-- Right Column: Crew Assistant -->
   <div class="right-col">
-    <!-- Daily Planner -->
-    <div class="daily-planner">
-      <div class="dp-header">
-        <div class="dp-title">Daily Tasks</div>
-        <div class="dp-tabs" id="dpTabs"></div>
-      </div>
-      <div class="dp-tasks" id="dpTasks"></div>
-    </div>
-
-    <!-- Chat -->
     <div class="chat-panel">
     <div class="chat-header">
       <h2>Josh's Landscaping Assistant</h2>
