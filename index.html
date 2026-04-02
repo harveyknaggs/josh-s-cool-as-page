@@ -930,6 +930,155 @@
       flex-shrink: 0;
     }
 
+    .goal-steps {
+      padding-left: 1.4rem;
+      margin-top: 0.15rem;
+    }
+
+    .goal-step {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      padding: 0.1rem 0;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+
+    .goal-step::before {
+      content: '\2013';
+      color: var(--border-dark);
+    }
+
+    .goal-name {
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .goal-name:hover {
+      color: var(--green);
+    }
+
+    /* Goal breakdown form */
+    .goal-breakdown {
+      display: none;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.85rem;
+      margin-top: 0.5rem;
+    }
+
+    .goal-breakdown.open { display: block; }
+
+    .goal-breakdown h4 {
+      font-size: 0.8rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      color: var(--text);
+    }
+
+    .goal-breakdown p {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+    }
+
+    .gb-steps-list {
+      margin-bottom: 0.5rem;
+    }
+
+    .gb-step-row {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.2rem 0;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .gb-step-row::before {
+      content: '\2013';
+      color: var(--border-dark);
+    }
+
+    .gb-step-remove {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 0.8rem;
+      padding: 0 0.15rem;
+      margin-left: auto;
+    }
+
+    .gb-step-remove:hover { color: var(--red); }
+
+    .gb-add-step {
+      display: flex;
+      gap: 0.3rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .gb-add-step input {
+      flex: 1;
+      padding: 0.3rem 0.5rem;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      font-size: 0.75rem;
+      font-family: inherit;
+      outline: none;
+      background: var(--surface);
+      color: var(--text);
+    }
+
+    .gb-add-step input:focus { border-color: var(--green); }
+    .gb-add-step input::placeholder { color: var(--text-muted); }
+
+    .gb-add-step button {
+      padding: 0.3rem 0.5rem;
+      border: none;
+      background: var(--green);
+      color: #fff;
+      border-radius: 5px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .gb-add-step button:hover { background: #15803d; }
+
+    .gb-actions {
+      display: flex;
+      gap: 0.4rem;
+      justify-content: flex-end;
+    }
+
+    .gb-actions button {
+      padding: 0.3rem 0.6rem;
+      border: none;
+      border-radius: 5px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .gb-save {
+      background: var(--green);
+      color: #fff;
+    }
+
+    .gb-save:hover { background: #15803d; }
+
+    .gb-cancel {
+      background: var(--surface);
+      color: var(--text-secondary);
+      border: 1px solid var(--border) !important;
+    }
+
+    .gb-cancel:hover { background: var(--surface2); }
+
     .goals-add-form {
       display: flex;
       gap: 0.4rem;
@@ -1013,10 +1162,23 @@
       <div class="goals-panel">
         <div class="goals-title">Goals</div>
         <ul class="goals-list" id="goalsList"></ul>
-        <form class="goals-add-form" onsubmit="addGoal(event)">
+        <form class="goals-add-form" onsubmit="startGoalBreakdown(event)">
           <input type="text" placeholder="Add a goal..." id="goalsAddInput">
           <button type="submit">Add</button>
         </form>
+        <div class="goal-breakdown" id="goalBreakdown">
+          <h4 id="gbTitle"></h4>
+          <p>How are you going to smash this? Add the steps:</p>
+          <div class="gb-steps-list" id="gbStepsList"></div>
+          <form class="gb-add-step" onsubmit="addBreakdownStep(event)">
+            <input type="text" placeholder="Add a step..." id="gbStepInput">
+            <button type="submit">+</button>
+          </form>
+          <div class="gb-actions">
+            <button class="gb-cancel" onclick="cancelGoalBreakdown()">Cancel</button>
+            <button class="gb-save" onclick="saveGoalWithSteps()">Save Goal</button>
+          </div>
+        </div>
       </div>
       <div class="todo-panel">
         <div class="todo-title">To Do List</div>
@@ -1687,6 +1849,8 @@ function completeTodo(index) {
 
 // ---- Goals ----
 const GOALS_STORE_KEY = 'josh-goals';
+let gbTempSteps = [];
+let gbTempName = '';
 
 function loadGoals() {
   try { const s = JSON.parse(localStorage.getItem(GOALS_STORE_KEY)); if (Array.isArray(s)) return s; } catch {}
@@ -1708,21 +1872,80 @@ function renderGoals() {
 
   let html = '';
   goals.forEach((goal, i) => {
-    html += `<li>${esc(goal)}<button class="goal-item-delete" onclick="deleteGoal(${i})" title="Remove">&times;</button></li>`;
+    const g = typeof goal === 'string' ? { name: goal, steps: [] } : goal;
+    html += `<li>
+      <div style="flex:1">
+        <span class="goal-name" onclick="toggleGoalSteps(${i})">${esc(g.name)}</span>
+        <div class="goal-steps" id="goalSteps-${i}" style="display:none">
+          ${g.steps.length > 0 ? g.steps.map(s => `<div class="goal-step">${esc(s)}</div>`).join('') : '<div class="goal-step" style="color:var(--text-muted);font-style:italic">No steps added</div>'}
+        </div>
+      </div>
+      <button class="goal-item-delete" onclick="deleteGoal(${i})" title="Remove">&times;</button>
+    </li>`;
   });
   container.innerHTML = html;
 }
 
-function addGoal(e) {
+function toggleGoalSteps(index) {
+  const el = document.getElementById('goalSteps-' + index);
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+function startGoalBreakdown(e) {
   e.preventDefault();
   const input = document.getElementById('goalsAddInput');
   const text = input.value.trim();
   if (!text) return;
-  const goals = loadGoals();
-  goals.push(text);
-  saveGoals(goals);
+
+  gbTempName = text;
+  gbTempSteps = [];
   input.value = '';
+
+  document.getElementById('gbTitle').textContent = 'Goal: ' + text;
+  document.getElementById('gbStepsList').innerHTML = '';
+  document.getElementById('goalBreakdown').classList.add('open');
+  document.getElementById('gbStepInput').focus();
+}
+
+function addBreakdownStep(e) {
+  e.preventDefault();
+  const input = document.getElementById('gbStepInput');
+  const text = input.value.trim();
+  if (!text) return;
+  gbTempSteps.push(text);
+  input.value = '';
+  renderBreakdownSteps();
+  input.focus();
+}
+
+function renderBreakdownSteps() {
+  const container = document.getElementById('gbStepsList');
+  let html = '';
+  gbTempSteps.forEach((step, i) => {
+    html += `<div class="gb-step-row">${esc(step)}<button class="gb-step-remove" onclick="removeBreakdownStep(${i})">&times;</button></div>`;
+  });
+  container.innerHTML = html;
+}
+
+function removeBreakdownStep(index) {
+  gbTempSteps.splice(index, 1);
+  renderBreakdownSteps();
+}
+
+function saveGoalWithSteps() {
+  const goals = loadGoals();
+  goals.push({ name: gbTempName, steps: gbTempSteps });
+  saveGoals(goals);
+  gbTempName = '';
+  gbTempSteps = [];
+  document.getElementById('goalBreakdown').classList.remove('open');
   renderGoals();
+}
+
+function cancelGoalBreakdown() {
+  gbTempName = '';
+  gbTempSteps = [];
+  document.getElementById('goalBreakdown').classList.remove('open');
 }
 
 function deleteGoal(index) {
