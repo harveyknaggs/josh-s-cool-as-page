@@ -1026,162 +1026,209 @@
       margin-top: 0.15rem;
     }
 
-    /* Goal breakdown form */
-    .goal-breakdown {
+    /* Goal popup modal */
+    .goal-modal-overlay {
       display: none;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 0.85rem;
-      margin-top: 0.5rem;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
     }
 
-    .goal-breakdown.open { display: block; }
+    .goal-modal-overlay.open {
+      display: flex;
+    }
 
-    .goal-breakdown h4 {
-      font-size: 0.8rem;
+    .goal-modal {
+      background: var(--surface);
+      border-radius: 12px;
+      box-shadow: var(--shadow-lg);
+      width: 440px;
+      max-width: 90vw;
+      max-height: 85vh;
+      overflow-y: auto;
+      padding: 1.5rem;
+    }
+
+    .goal-modal h3 {
+      font-size: 1.1rem;
       font-weight: 700;
-      margin-bottom: 0.5rem;
+      margin-bottom: 1.25rem;
+      text-align: center;
+    }
+
+    .gm-field {
+      margin-bottom: 1rem;
+    }
+
+    .gm-label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 0.35rem;
+      display: block;
+    }
+
+    .gm-hint {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-bottom: 0.35rem;
+    }
+
+    .gm-input {
+      width: 100%;
+      padding: 0.5rem 0.65rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-family: inherit;
+      outline: none;
+      background: var(--surface2);
       color: var(--text);
     }
 
-    .goal-breakdown p {
-      font-size: 0.7rem;
-      color: var(--text-muted);
-      margin-bottom: 0.5rem;
+    .gm-input:focus { border-color: var(--green); }
+    .gm-input::placeholder { color: var(--text-muted); }
+
+    .gm-textarea {
+      width: 100%;
+      padding: 0.5rem 0.65rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-family: inherit;
+      outline: none;
+      background: var(--surface2);
+      color: var(--text);
+      resize: vertical;
+      min-height: 50px;
     }
 
-    .gb-steps-list {
-      margin-bottom: 0.5rem;
+    .gm-textarea:focus { border-color: var(--green); }
+    .gm-textarea::placeholder { color: var(--text-muted); }
+
+    .gm-select {
+      width: 100%;
+      padding: 0.5rem 0.65rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-family: inherit;
+      outline: none;
+      background: var(--surface2);
+      color: var(--text);
+      cursor: pointer;
     }
 
-    .gb-step-row {
+    .gm-select:focus { border-color: var(--green); }
+
+    .gm-steps-list {
+      margin-bottom: 0.4rem;
+    }
+
+    .gm-step-row {
       display: flex;
       align-items: center;
-      gap: 0.3rem;
-      padding: 0.2rem 0;
-      font-size: 0.75rem;
+      gap: 0.35rem;
+      padding: 0.25rem 0;
+      font-size: 0.8rem;
       color: var(--text-secondary);
     }
 
-    .gb-step-row::before {
+    .gm-step-row::before {
       content: '\2013';
       color: var(--border-dark);
     }
 
-    .gb-step-remove {
+    .gm-step-remove {
       background: none;
       border: none;
       color: var(--text-muted);
       cursor: pointer;
-      font-size: 0.8rem;
-      padding: 0 0.15rem;
+      font-size: 0.85rem;
+      padding: 0 0.2rem;
       margin-left: auto;
     }
 
-    .gb-step-remove:hover { color: var(--red); }
+    .gm-step-remove:hover { color: var(--red); }
 
-    .gb-add-step {
+    .gm-add-step {
       display: flex;
-      gap: 0.3rem;
-      margin-bottom: 0.5rem;
+      gap: 0.35rem;
     }
 
-    .gb-add-step input {
+    .gm-add-step input {
       flex: 1;
-      padding: 0.3rem 0.5rem;
+      padding: 0.4rem 0.55rem;
       border: 1px solid var(--border);
-      border-radius: 5px;
-      font-size: 0.75rem;
+      border-radius: 6px;
+      font-size: 0.8rem;
       font-family: inherit;
       outline: none;
       background: var(--surface);
       color: var(--text);
     }
 
-    .gb-add-step input:focus { border-color: var(--green); }
-    .gb-add-step input::placeholder { color: var(--text-muted); }
+    .gm-add-step input:focus { border-color: var(--green); }
+    .gm-add-step input::placeholder { color: var(--text-muted); }
 
-    .gb-add-step button {
-      padding: 0.3rem 0.5rem;
+    .gm-add-step button {
+      padding: 0.4rem 0.6rem;
       border: none;
       background: var(--green);
       color: #fff;
-      border-radius: 5px;
-      font-size: 0.7rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
       font-weight: 600;
       cursor: pointer;
       font-family: inherit;
     }
 
-    .gb-add-step button:hover { background: #15803d; }
+    .gm-add-step button:hover { background: #15803d; }
 
-    .gb-actions {
+    .gm-reps-field {
+      margin-top: 0.5rem;
+    }
+
+    .gm-actions {
       display: flex;
-      gap: 0.4rem;
+      gap: 0.5rem;
       justify-content: flex-end;
+      margin-top: 1.25rem;
     }
 
-    .gb-actions button {
-      padding: 0.3rem 0.6rem;
+    .gm-actions button {
+      padding: 0.45rem 1rem;
       border: none;
-      border-radius: 5px;
-      font-size: 0.7rem;
+      border-radius: 8px;
+      font-size: 0.8rem;
       font-weight: 600;
       cursor: pointer;
       font-family: inherit;
     }
 
-    .gb-save {
+    .gm-save {
       background: var(--green);
       color: #fff;
     }
 
-    .gb-save:hover { background: #15803d; }
+    .gm-save:hover { background: #15803d; }
 
-    .gb-cancel {
-      background: var(--surface);
+    .gm-cancel {
+      background: var(--surface2);
       color: var(--text-secondary);
       border: 1px solid var(--border) !important;
     }
 
-    .gb-cancel:hover { background: var(--surface2); }
+    .gm-cancel:hover { background: var(--surface); }
 
-    .goals-add-form {
-      display: flex;
-      gap: 0.4rem;
+    .goals-add-btn {
       margin-top: 0.6rem;
     }
 
-    .goals-add-form input {
-      flex: 1;
-      padding: 0.35rem 0.6rem;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      font-size: 0.8rem;
-      font-family: inherit;
-      outline: none;
-      background: var(--surface2);
-      color: var(--text);
-    }
-
-    .goals-add-form input:focus { border-color: var(--green); }
-    .goals-add-form input::placeholder { color: var(--text-muted); }
-
-    .goals-add-form button {
-      padding: 0.35rem 0.65rem;
-      border: none;
-      background: var(--green);
-      color: #fff;
-      border-radius: 6px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      cursor: pointer;
-      font-family: inherit;
-      transition: background 0.15s;
-    }
-
-    .goals-add-form button:hover { background: #15803d; }
+    .goals-add-btn:hover { background: #15803d; }
 
     .goal-item-delete {
       background: none;
@@ -1230,23 +1277,7 @@
       <div class="goals-panel">
         <div class="goals-title">Goals</div>
         <ul class="goals-list" id="goalsList"></ul>
-        <form class="goals-add-form" onsubmit="startGoalBreakdown(event)">
-          <input type="text" placeholder="Add a goal..." id="goalsAddInput">
-          <button type="submit">Add</button>
-        </form>
-        <div class="goal-breakdown" id="goalBreakdown">
-          <h4 id="gbTitle"></h4>
-          <p>How are you going to smash this? Add the steps:</p>
-          <div class="gb-steps-list" id="gbStepsList"></div>
-          <form class="gb-add-step" onsubmit="addBreakdownStep(event)">
-            <input type="text" placeholder="Add a step..." id="gbStepInput">
-            <button type="submit">+</button>
-          </form>
-          <div class="gb-actions">
-            <button class="gb-cancel" onclick="cancelGoalBreakdown()">Cancel</button>
-            <button class="gb-save" onclick="saveGoalWithSteps()">Save Goal</button>
-          </div>
-        </div>
+        <button class="goals-add-form" onclick="openGoalModal()" style="border:none;background:var(--green);color:#fff;padding:0.4rem 0.75rem;border-radius:6px;font-size:0.75rem;font-weight:600;cursor:pointer;font-family:inherit;margin-top:0.6rem">+ Add Goal</button>
       </div>
       <div class="todo-panel">
         <div class="todo-title">To Do List</div>
@@ -1917,8 +1948,7 @@ function completeTodo(index) {
 
 // ---- Goals ----
 const GOALS_STORE_KEY = 'josh-goals';
-let gbTempSteps = [];
-let gbTempName = '';
+let gmTempSteps = [];
 
 function loadGoals() {
   try { const s = JSON.parse(localStorage.getItem(GOALS_STORE_KEY)); if (Array.isArray(s)) return s; } catch {}
@@ -1940,27 +1970,31 @@ function renderGoals() {
 
   let html = '';
   goals.forEach((goal, i) => {
-    const g = typeof goal === 'string' ? { name: goal, steps: [], progress: [] } : goal;
+    const g = typeof goal === 'string' ? { name: goal, steps: [], progress: [], why: '', timeframe: '', reps: 0, checkins: [] } : goal;
     if (!g.progress) g.progress = [];
+    if (!g.checkins) g.checkins = [];
 
     html += `<li>
       <div class="goal-item">
-        <span class="goal-name">${esc(g.name)}</span>`;
+        <span class="goal-name">${esc(g.name)}</span>
+        ${g.timeframe ? `<span style="font-size:0.6rem;color:var(--text-muted);margin-left:0.4rem">${esc(g.timeframe)}</span>` : ''}`;
 
     if (g.steps.length > 0) {
       html += '<div class="goal-steps">';
       g.steps.forEach((step, si) => {
-        const pct = g.progress[si] || 0;
+        const reps = g.reps || 10;
+        const done = g.checkins[si] || 0;
+        const pct = Math.min(Math.round((done / reps) * 100), 100);
         html += `<div class="goal-step">
           <div class="goal-step-name">${esc(step)}</div>
           <div class="goal-step-progress">
-            <div class="goal-step-bar" onclick="bumpGoalProgress(${i}, ${si})" title="Click to add 10%">
+            <div class="goal-step-bar" onclick="checkinGoalStep(${i}, ${si})" title="Click to check in (+1)">
               <div class="goal-step-fill" style="width:${pct}%"></div>
             </div>
-            <span class="goal-step-pct">${pct}%</span>
+            <span class="goal-step-pct">${done}/${reps}</span>
             <div class="goal-step-btns">
-              <button class="goal-step-btn" onclick="adjustGoalProgress(${i}, ${si}, -10)" title="-10%">&minus;</button>
-              <button class="goal-step-btn" onclick="adjustGoalProgress(${i}, ${si}, 10)" title="+10%">+</button>
+              <button class="goal-step-btn" onclick="adjustCheckin(${i}, ${si}, -1)" title="-1">&minus;</button>
+              <button class="goal-step-btn" onclick="adjustCheckin(${i}, ${si}, 1)" title="+1">+</button>
             </div>
           </div>
         </div>`;
@@ -1977,76 +2011,85 @@ function renderGoals() {
   container.innerHTML = html;
 }
 
-function bumpGoalProgress(goalIndex, stepIndex) {
-  adjustGoalProgress(goalIndex, stepIndex, 10);
+function checkinGoalStep(goalIndex, stepIndex) {
+  adjustCheckin(goalIndex, stepIndex, 1);
 }
 
-function adjustGoalProgress(goalIndex, stepIndex, delta) {
+function adjustCheckin(goalIndex, stepIndex, delta) {
   const goals = loadGoals();
-  const g = typeof goals[goalIndex] === 'string' ? { name: goals[goalIndex], steps: [], progress: [] } : goals[goalIndex];
-  if (!g.progress) g.progress = [];
-  const current = g.progress[stepIndex] || 0;
-  g.progress[stepIndex] = Math.max(0, Math.min(100, current + delta));
+  const g = goals[goalIndex];
+  if (!g.checkins) g.checkins = [];
+  const reps = g.reps || 10;
+  const current = g.checkins[stepIndex] || 0;
+  g.checkins[stepIndex] = Math.max(0, Math.min(reps, current + delta));
   goals[goalIndex] = g;
   saveGoals(goals);
   renderGoals();
 }
 
-function startGoalBreakdown(e) {
-  e.preventDefault();
-  const input = document.getElementById('goalsAddInput');
-  const text = input.value.trim();
-  if (!text) return;
-
-  gbTempName = text;
-  gbTempSteps = [];
-  input.value = '';
-
-  document.getElementById('gbTitle').textContent = 'Goal: ' + text;
-  document.getElementById('gbStepsList').innerHTML = '';
-  document.getElementById('goalBreakdown').classList.add('open');
-  document.getElementById('gbStepInput').focus();
+function openGoalModal() {
+  gmTempSteps = [];
+  document.getElementById('gmGoalName').value = '';
+  document.getElementById('gmWhy').value = '';
+  document.getElementById('gmTimeframe').value = '1 month';
+  document.getElementById('gmStepsList').innerHTML = '';
+  document.getElementById('gmStepInput').value = '';
+  document.getElementById('gmReps').value = '12';
+  document.getElementById('goalModalOverlay').classList.add('open');
+  setTimeout(() => document.getElementById('gmGoalName').focus(), 100);
 }
 
-function addBreakdownStep(e) {
+function closeGoalModal() {
+  gmTempSteps = [];
+  document.getElementById('goalModalOverlay').classList.remove('open');
+}
+
+function addGMStep(e) {
   e.preventDefault();
-  const input = document.getElementById('gbStepInput');
+  const input = document.getElementById('gmStepInput');
   const text = input.value.trim();
   if (!text) return;
-  gbTempSteps.push(text);
+  gmTempSteps.push(text);
   input.value = '';
-  renderBreakdownSteps();
+  renderGMSteps();
   input.focus();
 }
 
-function renderBreakdownSteps() {
-  const container = document.getElementById('gbStepsList');
+function renderGMSteps() {
+  const container = document.getElementById('gmStepsList');
   let html = '';
-  gbTempSteps.forEach((step, i) => {
-    html += `<div class="gb-step-row">${esc(step)}<button class="gb-step-remove" onclick="removeBreakdownStep(${i})">&times;</button></div>`;
+  gmTempSteps.forEach((step, i) => {
+    html += `<div class="gm-step-row">${esc(step)}<button class="gm-step-remove" onclick="removeGMStep(${i})">&times;</button></div>`;
   });
   container.innerHTML = html;
 }
 
-function removeBreakdownStep(index) {
-  gbTempSteps.splice(index, 1);
-  renderBreakdownSteps();
+function removeGMStep(index) {
+  gmTempSteps.splice(index, 1);
+  renderGMSteps();
 }
 
-function saveGoalWithSteps() {
+function saveGoalFromModal() {
+  const name = document.getElementById('gmGoalName').value.trim();
+  if (!name) return;
+
+  const why = document.getElementById('gmWhy').value.trim();
+  const timeframe = document.getElementById('gmTimeframe').value;
+  const reps = parseInt(document.getElementById('gmReps').value) || 12;
+
   const goals = loadGoals();
-  goals.push({ name: gbTempName, steps: gbTempSteps });
+  goals.push({
+    name,
+    why,
+    timeframe,
+    steps: gmTempSteps,
+    reps,
+    progress: [],
+    checkins: []
+  });
   saveGoals(goals);
-  gbTempName = '';
-  gbTempSteps = [];
-  document.getElementById('goalBreakdown').classList.remove('open');
+  closeGoalModal();
   renderGoals();
-}
-
-function cancelGoalBreakdown() {
-  gbTempName = '';
-  gbTempSteps = [];
-  document.getElementById('goalBreakdown').classList.remove('open');
 }
 
 function deleteGoal(index) {
@@ -2063,6 +2106,55 @@ renderDPTabs();
 renderDPTasks();
 initCal();
 </script>
+
+<!-- Goal Modal -->
+<div class="goal-modal-overlay" id="goalModalOverlay">
+  <div class="goal-modal">
+    <h3>Set a New Goal</h3>
+
+    <div class="gm-field">
+      <label class="gm-label">Main Goal</label>
+      <input class="gm-input" type="text" id="gmGoalName" placeholder="e.g. Gain 5kg muscle">
+    </div>
+
+    <div class="gm-field">
+      <label class="gm-label">Why do you want to achieve this?</label>
+      <textarea class="gm-textarea" id="gmWhy" placeholder="e.g. Feel stronger and more confident"></textarea>
+    </div>
+
+    <div class="gm-field">
+      <label class="gm-label">Time Frame</label>
+      <select class="gm-select" id="gmTimeframe">
+        <option value="1 week">1 Week</option>
+        <option value="1 month" selected>1 Month</option>
+        <option value="3 months">3 Months</option>
+        <option value="6 months">6 Months</option>
+        <option value="1 year">1 Year</option>
+      </select>
+    </div>
+
+    <div class="gm-field">
+      <label class="gm-label">Weekly steps to get there</label>
+      <div class="gm-hint">Small things you'll do each week to hit this goal</div>
+      <div class="gm-steps-list" id="gmStepsList"></div>
+      <form class="gm-add-step" onsubmit="addGMStep(event)">
+        <input type="text" id="gmStepInput" placeholder="e.g. Run 5kms">
+        <button type="submit">+</button>
+      </form>
+    </div>
+
+    <div class="gm-field gm-reps-field">
+      <label class="gm-label">How many times to complete the goal?</label>
+      <div class="gm-hint">If you did this consistently, how many check-ins to finish?</div>
+      <input class="gm-input" type="number" id="gmReps" min="1" value="12" placeholder="e.g. 12">
+    </div>
+
+    <div class="gm-actions">
+      <button class="gm-cancel" onclick="closeGoalModal()">Cancel</button>
+      <button class="gm-save" onclick="saveGoalFromModal()">Save Goal</button>
+    </div>
+  </div>
+</div>
 
 <div class="celebration-overlay" id="celebrationOverlay" onclick="this.classList.remove('show')">
   <div class="celebration-text">Thank God for<br>everything He's done</div>
