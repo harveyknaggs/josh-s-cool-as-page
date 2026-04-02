@@ -900,6 +900,18 @@
     .goals-panel {
       padding: 1.25rem;
       background: var(--surface);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .goals-list {
+      flex: 1;
+    }
+
+    .goals-add-btn {
+      align-self: flex-start;
+      margin-top: auto;
+      padding-top: 0.6rem;
     }
 
     .goals-title {
@@ -1466,7 +1478,7 @@
       <div class="goals-panel">
         <div class="goals-title">Goals</div>
         <ul class="goals-list" id="goalsList"></ul>
-        <button class="goals-add-form" onclick="openGoalModal()" style="border:none;background:var(--green);color:#fff;padding:0.4rem 0.75rem;border-radius:6px;font-size:0.75rem;font-weight:600;cursor:pointer;font-family:inherit;margin-top:0.6rem">+ Add Goal</button>
+        <div class="goals-add-btn"><button onclick="openGoalModal()" style="border:none;background:var(--green);color:#fff;padding:0.4rem 0.75rem;border-radius:6px;font-size:0.75rem;font-weight:600;cursor:pointer;font-family:inherit">+ Add Goal</button></div>
       </div>
       <div class="todo-panel">
         <div class="todo-title">To Do List</div>
