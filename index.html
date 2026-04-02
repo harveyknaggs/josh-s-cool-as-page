@@ -923,39 +923,107 @@
     }
 
     .goals-list li::before {
-      content: '\2022';
-      color: var(--green);
-      font-size: 1.1rem;
-      line-height: 1.2;
-      flex-shrink: 0;
+      content: none;
+    }
+
+    .goal-item {
+      flex: 1;
+      margin-bottom: 0.4rem;
+    }
+
+    .goal-name {
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: var(--text);
     }
 
     .goal-steps {
-      padding-left: 1.4rem;
-      margin-top: 0.15rem;
+      padding-left: 0.25rem;
+      margin-top: 0.3rem;
     }
 
     .goal-step {
       font-size: 0.7rem;
-      color: var(--text-muted);
-      padding: 0.1rem 0;
+      color: var(--text-secondary);
+      padding: 0.2rem 0;
+      font-weight: 400;
+    }
+
+    .goal-step-name {
       display: flex;
       align-items: center;
       gap: 0.3rem;
+      margin-bottom: 0.2rem;
     }
 
-    .goal-step::before {
+    .goal-step-name::before {
       content: '\2013';
       color: var(--border-dark);
     }
 
-    .goal-name {
-      font-weight: 500;
+    .goal-step-progress {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding-left: 0.85rem;
+    }
+
+    .goal-step-bar {
+      flex: 1;
+      height: 6px;
+      background: var(--surface2);
+      border-radius: 3px;
+      overflow: hidden;
       cursor: pointer;
     }
 
-    .goal-name:hover {
+    .goal-step-fill {
+      height: 100%;
+      background: var(--green);
+      border-radius: 3px;
+      transition: width 0.3s ease;
+    }
+
+    .goal-step-pct {
+      font-size: 0.6rem;
+      color: var(--text-muted);
+      min-width: 28px;
+      text-align: right;
+    }
+
+    .goal-step-btns {
+      display: flex;
+      gap: 0.15rem;
+    }
+
+    .goal-step-btn {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      width: 18px;
+      height: 18px;
+      font-size: 0.65rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      transition: all 0.15s;
+      padding: 0;
+    }
+
+    .goal-step-btn:hover {
+      background: var(--green-bg);
+      border-color: var(--green);
       color: var(--green);
+    }
+
+    .goal-no-steps {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      font-style: italic;
+      padding-left: 0.25rem;
+      margin-top: 0.15rem;
     }
 
     /* Goal breakdown form */
@@ -1872,23 +1940,56 @@ function renderGoals() {
 
   let html = '';
   goals.forEach((goal, i) => {
-    const g = typeof goal === 'string' ? { name: goal, steps: [] } : goal;
+    const g = typeof goal === 'string' ? { name: goal, steps: [], progress: [] } : goal;
+    if (!g.progress) g.progress = [];
+
     html += `<li>
-      <div style="flex:1">
-        <span class="goal-name" onclick="toggleGoalSteps(${i})">${esc(g.name)}</span>
-        <div class="goal-steps" id="goalSteps-${i}" style="display:none">
-          ${g.steps.length > 0 ? g.steps.map(s => `<div class="goal-step">${esc(s)}</div>`).join('') : '<div class="goal-step" style="color:var(--text-muted);font-style:italic">No steps added</div>'}
-        </div>
-      </div>
+      <div class="goal-item">
+        <span class="goal-name">${esc(g.name)}</span>`;
+
+    if (g.steps.length > 0) {
+      html += '<div class="goal-steps">';
+      g.steps.forEach((step, si) => {
+        const pct = g.progress[si] || 0;
+        html += `<div class="goal-step">
+          <div class="goal-step-name">${esc(step)}</div>
+          <div class="goal-step-progress">
+            <div class="goal-step-bar" onclick="bumpGoalProgress(${i}, ${si})" title="Click to add 10%">
+              <div class="goal-step-fill" style="width:${pct}%"></div>
+            </div>
+            <span class="goal-step-pct">${pct}%</span>
+            <div class="goal-step-btns">
+              <button class="goal-step-btn" onclick="adjustGoalProgress(${i}, ${si}, -10)" title="-10%">&minus;</button>
+              <button class="goal-step-btn" onclick="adjustGoalProgress(${i}, ${si}, 10)" title="+10%">+</button>
+            </div>
+          </div>
+        </div>`;
+      });
+      html += '</div>';
+    } else {
+      html += '<div class="goal-no-steps">No steps added</div>';
+    }
+
+    html += `</div>
       <button class="goal-item-delete" onclick="deleteGoal(${i})" title="Remove">&times;</button>
     </li>`;
   });
   container.innerHTML = html;
 }
 
-function toggleGoalSteps(index) {
-  const el = document.getElementById('goalSteps-' + index);
-  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+function bumpGoalProgress(goalIndex, stepIndex) {
+  adjustGoalProgress(goalIndex, stepIndex, 10);
+}
+
+function adjustGoalProgress(goalIndex, stepIndex, delta) {
+  const goals = loadGoals();
+  const g = typeof goals[goalIndex] === 'string' ? { name: goals[goalIndex], steps: [], progress: [] } : goals[goalIndex];
+  if (!g.progress) g.progress = [];
+  const current = g.progress[stepIndex] || 0;
+  g.progress[stepIndex] = Math.max(0, Math.min(100, current + delta));
+  goals[goalIndex] = g;
+  saveGoals(goals);
+  renderGoals();
 }
 
 function startGoalBreakdown(e) {
