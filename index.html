@@ -1044,61 +1044,6 @@
       display: none;
     }
 
-    .goals-completed-section {
-      margin-top: 0.6rem;
-      border-top: 1px solid var(--border);
-      padding-top: 0.5rem;
-    }
-
-    .goals-completed-section:empty {
-      display: none;
-    }
-
-    .goals-completed-header {
-      font-size: 0.7rem;
-      font-weight: 600;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-bottom: 0.3rem;
-    }
-
-    .goals-completed-item {
-      display: flex;
-      align-items: center;
-      gap: 0.3rem;
-      padding: 0.15rem 0;
-      font-size: 0.75rem;
-      color: var(--green);
-      text-decoration: line-through;
-    }
-
-    .goals-completed-item::before {
-      content: '\2713';
-      font-size: 0.7rem;
-      flex-shrink: 0;
-    }
-
-    .goals-completed-delete {
-      background: none;
-      border: none;
-      color: var(--text-muted);
-      cursor: pointer;
-      font-size: 0.8rem;
-      padding: 0 0.15rem;
-      margin-left: auto;
-      opacity: 0;
-      transition: all 0.15s;
-    }
-
-    .goals-completed-item:hover .goals-completed-delete {
-      opacity: 1;
-    }
-
-    .goals-completed-delete:hover {
-      color: var(--red);
-    }
-
     /* Goal complete confirmation modal */
     .goal-confirm-overlay {
       display: none;
@@ -1521,8 +1466,7 @@
       <div class="goals-panel">
         <div class="goals-title">Goals</div>
         <ul class="goals-list" id="goalsList"></ul>
-        <div class="goals-completed-section" id="goalsCompletedSection"></div>
-        <button onclick="openGoalModal()" style="border:none;background:var(--green);color:#fff;padding:0.4rem 0.75rem;border-radius:6px;font-size:0.75rem;font-weight:600;cursor:pointer;font-family:inherit;margin-top:0.6rem">+ Add Goal</button>
+        <button class="goals-add-form" onclick="openGoalModal()" style="border:none;background:var(--green);color:#fff;padding:0.4rem 0.75rem;border-radius:6px;font-size:0.75rem;font-weight:600;cursor:pointer;font-family:inherit;margin-top:0.6rem">+ Add Goal</button>
       </div>
       <div class="todo-panel">
         <div class="todo-title">To Do List</div>
@@ -2218,74 +2162,55 @@ function areAllStepsComplete(g) {
 
 function renderGoals() {
   const container = document.getElementById('goalsList');
-  const completedContainer = document.getElementById('goalsCompletedSection');
   const goals = loadGoals();
 
-  const active = [];
-  const completed = [];
+  if (goals.length === 0) {
+    container.innerHTML = '<li style="list-style:none;color:var(--text-muted);font-size:0.8rem;">No goals yet. Dream big!</li>';
+    return;
+  }
+
+  let html = '';
   goals.forEach((goal, i) => {
     const g = typeof goal === 'string' ? { name: goal, steps: [], checkins: [], completed: false } : goal;
-    if (g.completed) completed.push({ g, i });
-    else active.push({ g, i });
-  });
+    if (!g.checkins) g.checkins = [];
+    const goalDone = g.completed || false;
 
-  // Active goals
-  if (active.length === 0 && completed.length === 0) {
-    container.innerHTML = '<li style="list-style:none;color:var(--text-muted);font-size:0.8rem;">No goals yet. Dream big!</li>';
-  } else if (active.length === 0) {
-    container.innerHTML = '';
-  } else {
-    let html = '';
-    active.forEach(({ g, i }) => {
-      if (!g.checkins) g.checkins = [];
-      html += `<li>
-        <div class="goal-item">
-          <span class="goal-name">${esc(g.name)}</span>
-          ${g.timeframe ? `<span style="font-size:0.6rem;color:var(--text-muted);margin-left:0.4rem">${esc(g.timeframe)}</span>` : ''}`;
+    html += `<li>
+      <div class="goal-item ${goalDone ? 'goal-completed' : ''}">
+        <span class="goal-name">${esc(g.name)}</span>
+        ${g.timeframe ? `<span style="font-size:0.6rem;color:var(--text-muted);margin-left:0.4rem">${esc(g.timeframe)}</span>` : ''}`;
 
-      if (g.steps.length > 0) {
-        html += '<div class="goal-steps">';
-        g.steps.forEach((step, si) => {
-          const reps = g.reps || 10;
-          const done = g.checkins[si] || 0;
-          const pct = Math.min(Math.round((done / reps) * 100), 100);
-          const stepDone = done >= reps;
-          html += `<div class="goal-step ${stepDone ? 'step-complete' : ''}">
-            <div class="goal-step-name">${esc(step)}</div>
-            <div class="goal-step-progress">
-              <div class="goal-step-bar" onclick="checkinGoalStep(${i}, ${si})" title="Click to check in (+1)">
-                <div class="goal-step-fill" style="width:${pct}%"></div>
-              </div>
-              <span class="goal-step-pct">${done}/${reps}</span>
-              <div class="goal-step-btns">
-                <button class="goal-step-btn" onclick="adjustCheckin(${i}, ${si}, -1)" title="-1">&minus;</button>
-                <button class="goal-step-btn" onclick="adjustCheckin(${i}, ${si}, 1)" title="+1">+</button>
-              </div>
+    if (g.steps.length > 0) {
+      html += '<div class="goal-steps">';
+      g.steps.forEach((step, si) => {
+        const reps = g.reps || 10;
+        const done = g.checkins[si] || 0;
+        const pct = Math.min(Math.round((done / reps) * 100), 100);
+        const stepDone = done >= reps;
+        html += `<div class="goal-step ${stepDone ? 'step-complete' : ''}">
+          <div class="goal-step-name">${esc(step)}</div>
+          <div class="goal-step-progress">
+            <div class="goal-step-bar" onclick="${goalDone ? '' : `checkinGoalStep(${i}, ${si})`}" title="${goalDone ? '' : 'Click to check in (+1)'}">
+              <div class="goal-step-fill" style="width:${pct}%"></div>
             </div>
-          </div>`;
-        });
-        html += '</div>';
-      } else {
-        html += '<div class="goal-no-steps">No steps added</div>';
-      }
+            <span class="goal-step-pct">${done}/${reps}</span>
+            ${!goalDone ? `<div class="goal-step-btns">
+              <button class="goal-step-btn" onclick="adjustCheckin(${i}, ${si}, -1)" title="-1">&minus;</button>
+              <button class="goal-step-btn" onclick="adjustCheckin(${i}, ${si}, 1)" title="+1">+</button>
+            </div>` : ''}
+          </div>
+        </div>`;
+      });
+      html += '</div>';
+    } else {
+      html += '<div class="goal-no-steps">No steps added</div>';
+    }
 
-      html += `</div>
-        <button class="goal-item-delete" onclick="deleteGoal(${i})" title="Remove">&times;</button>
-      </li>`;
-    });
-    container.innerHTML = html;
-  }
-
-  // Completed goals
-  if (completed.length > 0) {
-    let cHtml = '<div class="goals-completed-header">Completed</div>';
-    completed.forEach(({ g, i }) => {
-      cHtml += `<div class="goals-completed-item">${esc(g.name)}<button class="goals-completed-delete" onclick="deleteGoal(${i})" title="Remove">&times;</button></div>`;
-    });
-    completedContainer.innerHTML = cHtml;
-  } else {
-    completedContainer.innerHTML = '';
-  }
+    html += `</div>
+      <button class="goal-item-delete" onclick="deleteGoal(${i})" title="Remove">&times;</button>
+    </li>`;
+  });
+  container.innerHTML = html;
 }
 
 function checkinGoalStep(goalIndex, stepIndex) {
