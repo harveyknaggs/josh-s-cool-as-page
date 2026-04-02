@@ -107,22 +107,21 @@
       flex: 1;
       display: grid;
       grid-template-columns: 1fr 380px;
-      grid-template-rows: auto 1fr;
+      grid-template-rows: 1fr;
       height: calc(100vh - 56px);
       overflow: hidden;
-    }
-
-    .top-row {
-      grid-column: 1 / -1;
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      border-bottom: 1px solid var(--border);
     }
 
     .left-col {
       display: flex;
       flex-direction: column;
       overflow-y: auto;
+    }
+
+    .top-panels {
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      border-bottom: 1px solid var(--border);
     }
 
     .right-col {
@@ -135,6 +134,7 @@
     /* ---- DAILY PLANNER ---- */
     .daily-planner {
       padding: 1.25rem;
+      border-bottom: 1px solid var(--border);
       background: var(--surface);
     }
 
@@ -703,7 +703,7 @@
     .todo-panel {
       padding: 1.25rem;
       background: var(--surface);
-      border-right: 1px solid var(--border);
+      border-left: 1px solid var(--border);
     }
 
     .todo-title {
@@ -900,7 +900,6 @@
     .goals-panel {
       padding: 1.25rem;
       background: var(--surface);
-      border-right: 1px solid var(--border);
     }
 
     .goals-title {
@@ -1008,36 +1007,27 @@
 
 <div class="layout">
 
-  <!-- Top Row: Goals + To Do List + Daily Planner -->
-  <div class="top-row">
-    <div class="goals-panel">
-      <div class="goals-title">Goals</div>
-      <ul class="goals-list" id="goalsList"></ul>
-      <form class="goals-add-form" onsubmit="addGoal(event)">
-        <input type="text" placeholder="Add a goal..." id="goalsAddInput">
-        <button type="submit">Add</button>
-      </form>
-    </div>
-    <div class="todo-panel">
-      <div class="todo-title">To Do List</div>
-      <div class="todo-items" id="todoItems"></div>
-      <form class="todo-add-form" onsubmit="addTodo(event)">
-        <input type="text" placeholder="Add something to do..." id="todoAddInput">
-        <button type="submit">Add</button>
-      </form>
-      <div class="todo-progress" id="todoProgress"></div>
-    </div>
-    <div class="daily-planner">
-      <div class="dp-header">
-        <div class="dp-title">Daily Tasks</div>
-        <div class="dp-tabs" id="dpTabs"></div>
-      </div>
-      <div class="dp-tasks" id="dpTasks"></div>
-    </div>
-  </div>
-
-  <!-- Left Column: Calendar -->
+  <!-- Left Column: Goals + To Do (top) then Calendar (bottom) -->
   <div class="left-col">
+    <div class="top-panels">
+      <div class="goals-panel">
+        <div class="goals-title">Goals</div>
+        <ul class="goals-list" id="goalsList"></ul>
+        <form class="goals-add-form" onsubmit="addGoal(event)">
+          <input type="text" placeholder="Add a goal..." id="goalsAddInput">
+          <button type="submit">Add</button>
+        </form>
+      </div>
+      <div class="todo-panel">
+        <div class="todo-title">To Do List</div>
+        <div class="todo-items" id="todoItems"></div>
+        <form class="todo-add-form" onsubmit="addTodo(event)">
+          <input type="text" placeholder="Add something to do..." id="todoAddInput">
+          <button type="submit">Add</button>
+        </form>
+        <div class="todo-progress" id="todoProgress"></div>
+      </div>
+    </div>
     <div class="calendar-panel">
       <div class="cal-header">
         <div class="cal-title" id="calTitle"></div>
@@ -1058,8 +1048,15 @@
     </div>
   </div>
 
-  <!-- Right Column: Crew Assistant -->
+  <!-- Right Column: Daily Planner + Crew Assistant -->
   <div class="right-col">
+    <div class="daily-planner">
+      <div class="dp-header">
+        <div class="dp-title">Daily Tasks</div>
+        <div class="dp-tabs" id="dpTabs"></div>
+      </div>
+      <div class="dp-tasks" id="dpTasks"></div>
+    </div>
     <div class="chat-panel">
     <div class="chat-header">
       <h2>Josh's Landscaping Assistant</h2>
