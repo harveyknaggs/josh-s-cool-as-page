@@ -1026,6 +1026,195 @@
       margin-top: 0.15rem;
     }
 
+    .goal-step.step-complete .goal-step-name {
+      text-decoration: line-through;
+      color: var(--text-muted);
+    }
+
+    .goal-step.step-complete .goal-step-fill {
+      background: var(--text-muted);
+    }
+
+    .goal-item.goal-completed .goal-name {
+      text-decoration: line-through;
+      color: var(--text-muted);
+    }
+
+    .goal-item.goal-completed .goal-steps {
+      opacity: 0.6;
+    }
+
+    /* Goal complete confirmation modal */
+    .goal-confirm-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 200;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .goal-confirm-overlay.open { display: flex; }
+
+    .goal-confirm {
+      background: var(--surface);
+      border-radius: 12px;
+      box-shadow: var(--shadow-lg);
+      width: 400px;
+      max-width: 90vw;
+      padding: 1.5rem;
+      text-align: center;
+    }
+
+    .goal-confirm h3 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+    }
+
+    .goal-confirm p {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin-bottom: 1.25rem;
+    }
+
+    .goal-confirm-btns {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+    }
+
+    .goal-confirm-btns button {
+      padding: 0.5rem 1.25rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .gcb-yes {
+      background: var(--green);
+      color: #fff;
+    }
+
+    .gcb-yes:hover { background: #15803d; }
+
+    .gcb-no {
+      background: var(--surface2);
+      color: var(--text-secondary);
+      border: 1px solid var(--border) !important;
+    }
+
+    .gcb-no:hover { background: var(--surface); }
+
+    /* Goal congrats screen */
+    .goal-congrats-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      z-index: 300;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      gap: 1rem;
+      cursor: pointer;
+    }
+
+    .goal-congrats-overlay.open { display: flex; }
+
+    .goal-congrats-text {
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: #fff;
+      text-align: center;
+      text-shadow: 0 0 40px rgba(34,197,94,0.6);
+      animation: glow 2s ease-in-out infinite alternate;
+    }
+
+    .goal-congrats-name {
+      font-size: 1.2rem;
+      color: #22d3ee;
+      text-align: center;
+      font-weight: 600;
+    }
+
+    .goal-congrats-dismiss {
+      font-size: 0.75rem;
+      color: rgba(255,255,255,0.4);
+      margin-top: 1rem;
+    }
+
+    /* Goal retry - why not modal */
+    .goal-retry-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 200;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .goal-retry-overlay.open { display: flex; }
+
+    .goal-retry {
+      background: var(--surface);
+      border-radius: 12px;
+      box-shadow: var(--shadow-lg);
+      width: 400px;
+      max-width: 90vw;
+      padding: 1.5rem;
+    }
+
+    .goal-retry h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .goal-retry p {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.75rem;
+    }
+
+    .goal-retry textarea {
+      width: 100%;
+      padding: 0.5rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-family: inherit;
+      outline: none;
+      background: var(--surface2);
+      color: var(--text);
+      resize: vertical;
+      min-height: 60px;
+      margin-bottom: 0.75rem;
+    }
+
+    .goal-retry textarea:focus { border-color: var(--green); }
+
+    .goal-retry-btns {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: flex-end;
+    }
+
+    .goal-retry-btns button {
+      padding: 0.45rem 1rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
     /* Goal popup modal */
     .goal-modal-overlay {
       display: none;
@@ -1949,6 +2138,8 @@ function completeTodo(index) {
 // ---- Goals ----
 const GOALS_STORE_KEY = 'josh-goals';
 let gmTempSteps = [];
+let pendingCompleteGoalIndex = null;
+let gmIsRetry = false;
 
 function loadGoals() {
   try { const s = JSON.parse(localStorage.getItem(GOALS_STORE_KEY)); if (Array.isArray(s)) return s; } catch {}
@@ -1957,6 +2148,16 @@ function loadGoals() {
 
 function saveGoals(goals) {
   localStorage.setItem(GOALS_STORE_KEY, JSON.stringify(goals));
+}
+
+function isStepComplete(g, si) {
+  if (!g.checkins) return false;
+  return (g.checkins[si] || 0) >= (g.reps || 10);
+}
+
+function areAllStepsComplete(g) {
+  if (!g.steps || g.steps.length === 0) return false;
+  return g.steps.every((_, si) => isStepComplete(g, si));
 }
 
 function renderGoals() {
@@ -1970,12 +2171,12 @@ function renderGoals() {
 
   let html = '';
   goals.forEach((goal, i) => {
-    const g = typeof goal === 'string' ? { name: goal, steps: [], progress: [], why: '', timeframe: '', reps: 0, checkins: [] } : goal;
-    if (!g.progress) g.progress = [];
+    const g = typeof goal === 'string' ? { name: goal, steps: [], checkins: [], completed: false } : goal;
     if (!g.checkins) g.checkins = [];
+    const goalDone = g.completed || false;
 
     html += `<li>
-      <div class="goal-item">
+      <div class="goal-item ${goalDone ? 'goal-completed' : ''}">
         <span class="goal-name">${esc(g.name)}</span>
         ${g.timeframe ? `<span style="font-size:0.6rem;color:var(--text-muted);margin-left:0.4rem">${esc(g.timeframe)}</span>` : ''}`;
 
@@ -1985,17 +2186,18 @@ function renderGoals() {
         const reps = g.reps || 10;
         const done = g.checkins[si] || 0;
         const pct = Math.min(Math.round((done / reps) * 100), 100);
-        html += `<div class="goal-step">
+        const stepDone = done >= reps;
+        html += `<div class="goal-step ${stepDone ? 'step-complete' : ''}">
           <div class="goal-step-name">${esc(step)}</div>
           <div class="goal-step-progress">
-            <div class="goal-step-bar" onclick="checkinGoalStep(${i}, ${si})" title="Click to check in (+1)">
+            <div class="goal-step-bar" onclick="${goalDone ? '' : `checkinGoalStep(${i}, ${si})`}" title="${goalDone ? '' : 'Click to check in (+1)'}">
               <div class="goal-step-fill" style="width:${pct}%"></div>
             </div>
             <span class="goal-step-pct">${done}/${reps}</span>
-            <div class="goal-step-btns">
+            ${!goalDone ? `<div class="goal-step-btns">
               <button class="goal-step-btn" onclick="adjustCheckin(${i}, ${si}, -1)" title="-1">&minus;</button>
               <button class="goal-step-btn" onclick="adjustCheckin(${i}, ${si}, 1)" title="+1">+</button>
-            </div>
+            </div>` : ''}
           </div>
         </div>`;
       });
@@ -2018,6 +2220,7 @@ function checkinGoalStep(goalIndex, stepIndex) {
 function adjustCheckin(goalIndex, stepIndex, delta) {
   const goals = loadGoals();
   const g = goals[goalIndex];
+  if (g.completed) return;
   if (!g.checkins) g.checkins = [];
   const reps = g.reps || 10;
   const current = g.checkins[stepIndex] || 0;
@@ -2025,22 +2228,75 @@ function adjustCheckin(goalIndex, stepIndex, delta) {
   goals[goalIndex] = g;
   saveGoals(goals);
   renderGoals();
+
+  // Check if all steps just became complete
+  if (areAllStepsComplete(g) && !g.completed) {
+    pendingCompleteGoalIndex = goalIndex;
+    document.getElementById('goalConfirmText').textContent = `Did you achieve "${g.name}"?`;
+    document.getElementById('goalConfirmOverlay').classList.add('open');
+  }
+}
+
+function goalYesComplete() {
+  document.getElementById('goalConfirmOverlay').classList.remove('open');
+  const goals = loadGoals();
+  const g = goals[pendingCompleteGoalIndex];
+  g.completed = true;
+  goals[pendingCompleteGoalIndex] = g;
+  saveGoals(goals);
+  renderGoals();
+
+  // Show congrats
+  document.getElementById('goalCongratsName').textContent = '"' + g.name + '" - Achieved!';
+  document.getElementById('goalCongratsOverlay').classList.add('open');
+  pendingCompleteGoalIndex = null;
+}
+
+function goalNotComplete() {
+  document.getElementById('goalConfirmOverlay').classList.remove('open');
+  const goals = loadGoals();
+  const g = goals[pendingCompleteGoalIndex];
+
+  // Open the goal modal pre-filled as a retry
+  gmIsRetry = true;
+  gmTempSteps = [];
+  document.getElementById('goalModalTitle').textContent = 'Retry: ' + g.name;
+  document.getElementById('gmGoalName').value = g.name;
+  document.getElementById('gmWhy').value = g.why || '';
+  document.getElementById('gmTimeframe').value = g.timeframe || '1 month';
+  document.getElementById('gmStepsList').innerHTML = '';
+  document.getElementById('gmStepInput').value = '';
+  document.getElementById('gmReps').value = String(g.reps || 12);
+  document.getElementById('gmWhyNotField').style.display = 'block';
+  document.getElementById('gmWhyNot').value = '';
+  document.getElementById('goalModalOverlay').classList.add('open');
+  setTimeout(() => document.getElementById('gmWhyNot').focus(), 100);
+}
+
+function closeGoalCongrats() {
+  document.getElementById('goalCongratsOverlay').classList.remove('open');
 }
 
 function openGoalModal() {
   gmTempSteps = [];
+  gmIsRetry = false;
+  document.getElementById('goalModalTitle').textContent = 'Set a New Goal';
   document.getElementById('gmGoalName').value = '';
   document.getElementById('gmWhy').value = '';
   document.getElementById('gmTimeframe').value = '1 month';
   document.getElementById('gmStepsList').innerHTML = '';
   document.getElementById('gmStepInput').value = '';
   document.getElementById('gmReps').value = '12';
+  document.getElementById('gmWhyNotField').style.display = 'none';
+  document.getElementById('gmWhyNot').value = '';
   document.getElementById('goalModalOverlay').classList.add('open');
   setTimeout(() => document.getElementById('gmGoalName').focus(), 100);
 }
 
 function closeGoalModal() {
   gmTempSteps = [];
+  gmIsRetry = false;
+  pendingCompleteGoalIndex = null;
   document.getElementById('goalModalOverlay').classList.remove('open');
 }
 
@@ -2078,14 +2334,20 @@ function saveGoalFromModal() {
   const reps = parseInt(document.getElementById('gmReps').value) || 12;
 
   const goals = loadGoals();
+
+  // If retrying, delete the old failed goal
+  if (gmIsRetry && pendingCompleteGoalIndex !== null) {
+    goals.splice(pendingCompleteGoalIndex, 1);
+  }
+
   goals.push({
     name,
     why,
     timeframe,
     steps: gmTempSteps,
     reps,
-    progress: [],
-    checkins: []
+    checkins: [],
+    completed: false
   });
   saveGoals(goals);
   closeGoalModal();
@@ -2110,11 +2372,16 @@ initCal();
 <!-- Goal Modal -->
 <div class="goal-modal-overlay" id="goalModalOverlay">
   <div class="goal-modal">
-    <h3>Set a New Goal</h3>
+    <h3 id="goalModalTitle">Set a New Goal</h3>
 
     <div class="gm-field">
       <label class="gm-label">Main Goal</label>
       <input class="gm-input" type="text" id="gmGoalName" placeholder="e.g. Gain 5kg muscle">
+    </div>
+
+    <div class="gm-field" id="gmWhyNotField" style="display:none">
+      <label class="gm-label">What didn't work last time?</label>
+      <textarea class="gm-textarea" id="gmWhyNot" placeholder="e.g. Didn't track calories consistently"></textarea>
     </div>
 
     <div class="gm-field">
@@ -2154,6 +2421,25 @@ initCal();
       <button class="gm-save" onclick="saveGoalFromModal()">Save Goal</button>
     </div>
   </div>
+</div>
+
+<!-- Goal Complete Confirmation -->
+<div class="goal-confirm-overlay" id="goalConfirmOverlay">
+  <div class="goal-confirm">
+    <h3>All steps complete!</h3>
+    <p id="goalConfirmText">Did you achieve your goal?</p>
+    <div class="goal-confirm-btns">
+      <button class="gcb-no" onclick="goalNotComplete()">Not yet</button>
+      <button class="gcb-yes" onclick="goalYesComplete()">Yes!</button>
+    </div>
+  </div>
+</div>
+
+<!-- Goal Congrats -->
+<div class="goal-congrats-overlay" id="goalCongratsOverlay" onclick="closeGoalCongrats()">
+  <div class="goal-congrats-text">Congratulations!</div>
+  <div class="goal-congrats-name" id="goalCongratsName"></div>
+  <div class="goal-congrats-dismiss">click anywhere to close</div>
 </div>
 
 <div class="celebration-overlay" id="celebrationOverlay" onclick="this.classList.remove('show')">
