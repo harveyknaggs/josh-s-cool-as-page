@@ -107,9 +107,16 @@
       flex: 1;
       display: grid;
       grid-template-columns: 1fr 380px;
-      grid-template-rows: 1fr;
+      grid-template-rows: auto 1fr;
       height: calc(100vh - 56px);
       overflow: hidden;
+    }
+
+    .top-row {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      border-bottom: 1px solid var(--border);
     }
 
     .left-col {
@@ -696,7 +703,6 @@
     /* ---- TO DO LIST ---- */
     .todo-panel {
       padding: 1.25rem;
-      border-bottom: 1px solid var(--border);
       background: var(--surface);
     }
 
@@ -889,6 +895,99 @@
       from { text-shadow: 0 0 20px rgba(255,215,0,0.4); }
       to { text-shadow: 0 0 60px rgba(255,215,0,0.8), 0 0 100px rgba(255,215,0,0.3); }
     }
+
+    /* ---- GOALS ---- */
+    .goals-panel {
+      padding: 1.25rem;
+      background: var(--surface);
+      border-left: 1px solid var(--border);
+    }
+
+    .goals-title {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+    }
+
+    .goals-list {
+      list-style: none;
+      padding: 0;
+    }
+
+    .goals-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.4rem;
+      padding: 0.3rem 0;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+
+    .goals-list li::before {
+      content: '\2022';
+      color: var(--green);
+      font-size: 1.1rem;
+      line-height: 1.2;
+      flex-shrink: 0;
+    }
+
+    .goals-add-form {
+      display: flex;
+      gap: 0.4rem;
+      margin-top: 0.6rem;
+    }
+
+    .goals-add-form input {
+      flex: 1;
+      padding: 0.35rem 0.6rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-family: inherit;
+      outline: none;
+      background: var(--surface2);
+      color: var(--text);
+    }
+
+    .goals-add-form input:focus { border-color: var(--green); }
+    .goals-add-form input::placeholder { color: var(--text-muted); }
+
+    .goals-add-form button {
+      padding: 0.35rem 0.65rem;
+      border: none;
+      background: var(--green);
+      color: #fff;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.15s;
+    }
+
+    .goals-add-form button:hover { background: #15803d; }
+
+    .goal-item-delete {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 0.9rem;
+      padding: 0 0.2rem;
+      border-radius: 4px;
+      transition: all 0.15s;
+      opacity: 0;
+      margin-left: auto;
+    }
+
+    .goals-list li:hover .goal-item-delete {
+      opacity: 1;
+    }
+
+    .goal-item-delete:hover {
+      color: var(--red);
+      background: var(--red-light);
+    }
   </style>
 </head>
 <body>
@@ -909,9 +1008,8 @@
 
 <div class="layout">
 
-  <!-- Left Column: To Do + Calendar -->
-  <div class="left-col">
-    <!-- To Do List -->
+  <!-- Top Row: To Do List + Goals -->
+  <div class="top-row">
     <div class="todo-panel">
       <div class="todo-title">To Do List</div>
       <div class="todo-items" id="todoItems"></div>
@@ -921,7 +1019,18 @@
       </form>
       <div class="todo-progress" id="todoProgress"></div>
     </div>
+    <div class="goals-panel">
+      <div class="goals-title">Goals</div>
+      <ul class="goals-list" id="goalsList"></ul>
+      <form class="goals-add-form" onsubmit="addGoal(event)">
+        <input type="text" placeholder="Add a goal..." id="goalsAddInput">
+        <button type="submit">Add</button>
+      </form>
+    </div>
+  </div>
 
+  <!-- Left Column: Calendar -->
+  <div class="left-col">
     <div class="calendar-panel">
       <div class="cal-header">
         <div class="cal-title" id="calTitle"></div>
@@ -1582,7 +1691,55 @@ function completeTodo(index) {
   }, 300);
 }
 
+// ---- Goals ----
+const GOALS_STORE_KEY = 'josh-goals';
+
+function loadGoals() {
+  try { const s = JSON.parse(localStorage.getItem(GOALS_STORE_KEY)); if (Array.isArray(s)) return s; } catch {}
+  return [];
+}
+
+function saveGoals(goals) {
+  localStorage.setItem(GOALS_STORE_KEY, JSON.stringify(goals));
+}
+
+function renderGoals() {
+  const container = document.getElementById('goalsList');
+  const goals = loadGoals();
+
+  if (goals.length === 0) {
+    container.innerHTML = '<li style="list-style:none;color:var(--text-muted);font-size:0.8rem;">No goals yet. Dream big!</li>';
+    return;
+  }
+
+  let html = '';
+  goals.forEach((goal, i) => {
+    html += `<li>${esc(goal)}<button class="goal-item-delete" onclick="deleteGoal(${i})" title="Remove">&times;</button></li>`;
+  });
+  container.innerHTML = html;
+}
+
+function addGoal(e) {
+  e.preventDefault();
+  const input = document.getElementById('goalsAddInput');
+  const text = input.value.trim();
+  if (!text) return;
+  const goals = loadGoals();
+  goals.push(text);
+  saveGoals(goals);
+  input.value = '';
+  renderGoals();
+}
+
+function deleteGoal(index) {
+  const goals = loadGoals();
+  goals.splice(index, 1);
+  saveGoals(goals);
+  renderGoals();
+}
+
 // ---- Init ----
+renderGoals();
 renderTodos();
 renderDPTabs();
 renderDPTasks();
