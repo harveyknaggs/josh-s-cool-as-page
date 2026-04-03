@@ -485,6 +485,7 @@
     .photo-actions {
       display: flex;
       gap: 0.4rem;
+      align-items: center;
     }
 
     .photo-upload-btn {
@@ -501,6 +502,22 @@
 
     .photo-upload-btn:hover { background: #15803d; }
 
+    .photo-extract-btn {
+      padding: 0.35rem 0.65rem;
+      background: #2563eb;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.15s;
+    }
+
+    .photo-extract-btn:hover { background: #1d4ed8; }
+    .photo-extract-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
     .photo-clear-btn {
       padding: 0.35rem 0.65rem;
       background: var(--surface2);
@@ -516,8 +533,14 @@
 
     .photo-clear-btn:hover { background: var(--surface); }
 
-    .photo-area {
+    .photo-content {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
       min-height: 50vh;
+    }
+
+    .photo-area {
       background: var(--surface2);
       border: 1px solid var(--border);
       border-radius: var(--radius);
@@ -526,6 +549,7 @@
       justify-content: center;
       overflow: hidden;
       position: relative;
+      min-height: 50vh;
     }
 
     .photo-area.dragover {
@@ -550,6 +574,165 @@
       height: 100%;
       object-fit: contain;
       border-radius: var(--radius);
+    }
+
+    .extracted-panel {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      display: flex;
+      flex-direction: column;
+      background: var(--surface);
+    }
+
+    .extracted-header {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+
+    .extracted-status {
+      font-size: 0.7rem;
+      font-weight: 400;
+      color: var(--text-muted);
+      margin-left: 0.5rem;
+    }
+
+    .extracted-list {
+      flex: 1;
+      padding: 0.75rem 1rem;
+      overflow-y: auto;
+    }
+
+    .extracted-empty {
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      text-align: center;
+      padding: 2rem 1rem;
+    }
+
+    .extracted-item {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.35rem 0;
+      border-bottom: 1px solid var(--surface2);
+    }
+
+    .extracted-item:last-child { border-bottom: none; }
+
+    .extracted-item input[type="text"] {
+      flex: 1;
+      padding: 0.3rem 0.5rem;
+      border: 1px solid transparent;
+      border-radius: 5px;
+      font-size: 0.8rem;
+      font-family: inherit;
+      outline: none;
+      background: transparent;
+      color: var(--text);
+    }
+
+    .extracted-item input[type="text"]:hover {
+      border-color: var(--border);
+      background: var(--surface2);
+    }
+
+    .extracted-item input[type="text"]:focus {
+      border-color: var(--green);
+      background: var(--surface);
+    }
+
+    .extracted-item-delete {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 0.85rem;
+      padding: 0 0.2rem;
+      opacity: 0;
+      transition: all 0.15s;
+    }
+
+    .extracted-item:hover .extracted-item-delete { opacity: 1; }
+    .extracted-item-delete:hover { color: var(--red); }
+
+    .extracted-item-schedule {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 0.7rem;
+      padding: 0.15rem 0.3rem;
+      border-radius: 4px;
+      opacity: 0;
+      transition: all 0.15s;
+    }
+
+    .extracted-item:hover .extracted-item-schedule { opacity: 1; }
+
+    .extracted-item-schedule:hover {
+      color: var(--green);
+      background: var(--green-bg);
+    }
+
+    .extracted-add-form {
+      display: flex;
+      gap: 0.3rem;
+      padding: 0.5rem 1rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .extracted-add-form input {
+      flex: 1;
+      padding: 0.3rem 0.5rem;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      font-size: 0.8rem;
+      font-family: inherit;
+      outline: none;
+      background: var(--surface2);
+      color: var(--text);
+    }
+
+    .extracted-add-form input:focus { border-color: var(--green); }
+    .extracted-add-form input::placeholder { color: var(--text-muted); }
+
+    .extracted-add-form button {
+      padding: 0.3rem 0.5rem;
+      border: none;
+      background: var(--green);
+      color: #fff;
+      border-radius: 5px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .extracted-add-form button:hover { background: #15803d; }
+
+    .ocr-progress {
+      padding: 1rem;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+    }
+
+    .ocr-progress-bar {
+      width: 80%;
+      margin: 0.5rem auto;
+      height: 6px;
+      background: var(--surface2);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .ocr-progress-fill {
+      height: 100%;
+      background: #2563eb;
+      border-radius: 3px;
+      transition: width 0.3s ease;
     }
 
     /* ---- Day Detail Modal ---- */
@@ -1536,6 +1719,7 @@
       background: var(--red-light);
     }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 </head>
 <body>
 
@@ -1599,16 +1783,29 @@
         <div class="photo-actions">
           <label class="photo-upload-btn" for="photoUpload">Upload Photo</label>
           <input type="file" id="photoUpload" accept="image/*" onchange="handlePhotoUpload(event)" style="display:none">
+          <button class="photo-extract-btn" id="extractBtn" onclick="extractText()" disabled>Extract Jobs</button>
           <button class="photo-clear-btn" onclick="clearPhoto()">Clear</button>
         </div>
       </div>
-      <div class="photo-area" id="photoArea">
-        <div class="photo-placeholder" id="photoPlaceholder">
-          <div class="photo-placeholder-icon">&#128247;</div>
-          <div>Upload a photo of your whiteboard</div>
-          <div style="font-size:0.7rem;margin-top:0.25rem">Click "Upload Photo" or drag & drop</div>
+      <div class="photo-content">
+        <div class="photo-area" id="photoArea">
+          <div class="photo-placeholder" id="photoPlaceholder">
+            <div class="photo-placeholder-icon">&#128247;</div>
+            <div>Upload a photo of your whiteboard</div>
+            <div style="font-size:0.7rem;margin-top:0.25rem">Click "Upload Photo" or drag & drop</div>
+          </div>
+          <img id="photoImg" style="display:none">
         </div>
-        <img id="photoImg" style="display:none">
+        <div class="extracted-panel">
+          <div class="extracted-header">Extracted Jobs <span class="extracted-status" id="extractedStatus"></span></div>
+          <div class="extracted-list" id="extractedList">
+            <div class="extracted-empty">Upload a photo and click "Extract Jobs" to read the whiteboard</div>
+          </div>
+          <form class="extracted-add-form" onsubmit="addExtractedItem(event)">
+            <input type="text" placeholder="Add a job manually..." id="extractedAddInput">
+            <button type="submit">Add</button>
+          </form>
+        </div>
       </div>
     </div>
   </div>
@@ -2471,6 +2668,7 @@ function deleteGoal(index) {
 
 // ---- Photo Board ----
 const PHOTO_STORE_KEY = 'josh-photo-board';
+const EXTRACTED_STORE_KEY = 'josh-extracted-jobs';
 
 function handlePhotoUpload(e) {
   const file = e.target.files[0];
@@ -2493,6 +2691,7 @@ function showPhoto(src) {
   img.src = src;
   img.style.display = 'block';
   placeholder.style.display = 'none';
+  document.getElementById('extractBtn').disabled = false;
 }
 
 function clearPhoto() {
@@ -2503,11 +2702,123 @@ function clearPhoto() {
   placeholder.style.display = 'block';
   localStorage.removeItem(PHOTO_STORE_KEY);
   document.getElementById('photoUpload').value = '';
+  document.getElementById('extractBtn').disabled = true;
+}
+
+function loadExtractedJobs() {
+  try { const s = JSON.parse(localStorage.getItem(EXTRACTED_STORE_KEY)); if (Array.isArray(s)) return s; } catch {}
+  return [];
+}
+
+function saveExtractedJobs(jobs) {
+  localStorage.setItem(EXTRACTED_STORE_KEY, JSON.stringify(jobs));
+}
+
+function renderExtractedJobs() {
+  const container = document.getElementById('extractedList');
+  const jobs = loadExtractedJobs();
+
+  if (jobs.length === 0) {
+    container.innerHTML = '<div class="extracted-empty">Upload a photo and click "Extract Jobs" to read the whiteboard</div>';
+    return;
+  }
+
+  let html = '';
+  jobs.forEach((job, i) => {
+    html += `<div class="extracted-item">
+      <input type="text" value="${esc(job)}" onchange="updateExtractedItem(${i}, this.value)">
+      <button class="extracted-item-schedule" onclick="scheduleExtractedJob(${i})" title="Send to assistant">&#9654;</button>
+      <button class="extracted-item-delete" onclick="deleteExtractedItem(${i})" title="Remove">&times;</button>
+    </div>`;
+  });
+  container.innerHTML = html;
+}
+
+function updateExtractedItem(index, value) {
+  const jobs = loadExtractedJobs();
+  jobs[index] = value;
+  saveExtractedJobs(jobs);
+}
+
+function deleteExtractedItem(index) {
+  const jobs = loadExtractedJobs();
+  jobs.splice(index, 1);
+  saveExtractedJobs(jobs);
+  renderExtractedJobs();
+}
+
+function addExtractedItem(e) {
+  e.preventDefault();
+  const input = document.getElementById('extractedAddInput');
+  const text = input.value.trim();
+  if (!text) return;
+  const jobs = loadExtractedJobs();
+  jobs.push(text);
+  saveExtractedJobs(jobs);
+  input.value = '';
+  renderExtractedJobs();
+}
+
+function scheduleExtractedJob(index) {
+  const jobs = loadExtractedJobs();
+  const job = jobs[index];
+  const chatInput = document.getElementById('chatInput');
+  chatInput.value = job;
+  chatInput.focus();
+  chatInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+async function extractText() {
+  const img = document.getElementById('photoImg');
+  if (!img.src) return;
+
+  const btn = document.getElementById('extractBtn');
+  const status = document.getElementById('extractedStatus');
+  const list = document.getElementById('extractedList');
+
+  btn.disabled = true;
+  btn.textContent = 'Extracting...';
+  list.innerHTML = `<div class="ocr-progress">
+    Reading whiteboard...<br>
+    <div class="ocr-progress-bar"><div class="ocr-progress-fill" id="ocrFill" style="width:0%"></div></div>
+  </div>`;
+
+  try {
+    const result = await Tesseract.recognize(img.src, 'eng', {
+      logger: m => {
+        if (m.status === 'recognizing text') {
+          const fill = document.getElementById('ocrFill');
+          if (fill) fill.style.width = Math.round(m.progress * 100) + '%';
+        }
+      }
+    });
+
+    const lines = result.data.text
+      .split('\n')
+      .map(l => l.trim())
+      .filter(l => l.length > 1);
+
+    if (lines.length > 0) {
+      saveExtractedJobs(lines);
+      status.textContent = `${lines.length} items found`;
+    } else {
+      status.textContent = 'No text found';
+    }
+    renderExtractedJobs();
+  } catch (err) {
+    list.innerHTML = '<div class="extracted-empty">Failed to read image. Try a clearer photo.</div>';
+    status.textContent = 'Error';
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Extract Jobs';
 }
 
 function initPhoto() {
   const saved = localStorage.getItem(PHOTO_STORE_KEY);
   if (saved) showPhoto(saved);
+
+  renderExtractedJobs();
 
   const area = document.getElementById('photoArea');
   area.addEventListener('dragover', e => { e.preventDefault(); area.classList.add('dragover'); });
