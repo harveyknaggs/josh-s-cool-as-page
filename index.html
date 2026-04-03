@@ -464,6 +464,94 @@
       font-weight: 500;
     }
 
+    /* ---- PHOTO BOARD ---- */
+    .photo-panel {
+      padding: 1.25rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .photo-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+    }
+
+    .photo-title {
+      font-size: 1rem;
+      font-weight: 700;
+    }
+
+    .photo-actions {
+      display: flex;
+      gap: 0.4rem;
+    }
+
+    .photo-upload-btn {
+      padding: 0.35rem 0.65rem;
+      background: var(--green);
+      color: #fff;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.15s;
+    }
+
+    .photo-upload-btn:hover { background: #15803d; }
+
+    .photo-clear-btn {
+      padding: 0.35rem 0.65rem;
+      background: var(--surface2);
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+
+    .photo-clear-btn:hover { background: var(--surface); }
+
+    .photo-area {
+      min-height: 50vh;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .photo-area.dragover {
+      border-color: var(--green);
+      background: var(--green-bg);
+    }
+
+    .photo-placeholder {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      padding: 2rem;
+    }
+
+    .photo-placeholder-icon {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    #photoImg {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      border-radius: var(--radius);
+    }
+
     /* ---- Day Detail Modal ---- */
     .day-detail {
       display: none;
@@ -1503,6 +1591,26 @@
         <div id="dayDetailList"></div>
       </div>
     </div>
+
+    <!-- Photo Board -->
+    <div class="photo-panel">
+      <div class="photo-header">
+        <div class="photo-title">Job Board</div>
+        <div class="photo-actions">
+          <label class="photo-upload-btn" for="photoUpload">Upload Photo</label>
+          <input type="file" id="photoUpload" accept="image/*" onchange="handlePhotoUpload(event)" style="display:none">
+          <button class="photo-clear-btn" onclick="clearPhoto()">Clear</button>
+        </div>
+      </div>
+      <div class="photo-area" id="photoArea">
+        <div class="photo-placeholder" id="photoPlaceholder">
+          <div class="photo-placeholder-icon">&#128247;</div>
+          <div>Upload a photo of your whiteboard</div>
+          <div style="font-size:0.7rem;margin-top:0.25rem">Click "Upload Photo" or drag & drop</div>
+        </div>
+        <img id="photoImg" style="display:none">
+      </div>
+    </div>
   </div>
 
   <!-- Right Column: Daily Planner + Crew Assistant -->
@@ -2361,12 +2469,64 @@ function deleteGoal(index) {
   renderGoals();
 }
 
+// ---- Photo Board ----
+const PHOTO_STORE_KEY = 'josh-photo-board';
+
+function handlePhotoUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  loadPhotoFile(file);
+}
+
+function loadPhotoFile(file) {
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    showPhoto(ev.target.result);
+    localStorage.setItem(PHOTO_STORE_KEY, ev.target.result);
+  };
+  reader.readAsDataURL(file);
+}
+
+function showPhoto(src) {
+  const img = document.getElementById('photoImg');
+  const placeholder = document.getElementById('photoPlaceholder');
+  img.src = src;
+  img.style.display = 'block';
+  placeholder.style.display = 'none';
+}
+
+function clearPhoto() {
+  const img = document.getElementById('photoImg');
+  const placeholder = document.getElementById('photoPlaceholder');
+  img.src = '';
+  img.style.display = 'none';
+  placeholder.style.display = 'block';
+  localStorage.removeItem(PHOTO_STORE_KEY);
+  document.getElementById('photoUpload').value = '';
+}
+
+function initPhoto() {
+  const saved = localStorage.getItem(PHOTO_STORE_KEY);
+  if (saved) showPhoto(saved);
+
+  const area = document.getElementById('photoArea');
+  area.addEventListener('dragover', e => { e.preventDefault(); area.classList.add('dragover'); });
+  area.addEventListener('dragleave', () => area.classList.remove('dragover'));
+  area.addEventListener('drop', e => {
+    e.preventDefault();
+    area.classList.remove('dragover');
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) loadPhotoFile(file);
+  });
+}
+
 // ---- Init ----
 renderGoals();
 renderTodos();
 renderDPTabs();
 renderDPTasks();
 initCal();
+initPhoto();
 </script>
 
 <!-- Goal Modal -->
