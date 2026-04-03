@@ -1719,7 +1719,7 @@
       background: var(--red-light);
     }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
+  <script src="https://unpkg.com/tesseract.js@v2.1.5/dist/tesseract.min.js"></script>
 </head>
 <body>
 
@@ -2782,23 +2782,24 @@ async function extractText() {
   list.innerHTML = `<div class="ocr-progress">
     Reading whiteboard...<br>
     <div class="ocr-progress-bar"><div class="ocr-progress-fill" id="ocrFill" style="width:0%"></div></div>
-    <div id="ocrStatus" style="margin-top:0.4rem;font-size:0.7rem"></div>
+    <div id="ocrStatus" style="margin-top:0.4rem;font-size:0.7rem">Initialising...</div>
   </div>`;
 
   try {
-    const worker = await Tesseract.createWorker('eng', 1, {
-      logger: m => {
-        const fill = document.getElementById('ocrFill');
-        const ocrStat = document.getElementById('ocrStatus');
-        if (fill && m.progress) fill.style.width = Math.round(m.progress * 100) + '%';
-        if (ocrStat && m.status) ocrStat.textContent = m.status;
+    const result = await Tesseract.recognize(
+      img.src,
+      'eng',
+      {
+        logger: m => {
+          const fill = document.getElementById('ocrFill');
+          const ocrStat = document.getElementById('ocrStatus');
+          if (fill && m.progress !== undefined) fill.style.width = Math.round(m.progress * 100) + '%';
+          if (ocrStat && m.status) ocrStat.textContent = m.status;
+        }
       }
-    });
+    );
 
-    const { data } = await worker.recognize(img.src);
-    await worker.terminate();
-
-    const lines = data.text
+    const lines = result.data.text
       .split('\n')
       .map(l => l.trim())
       .filter(l => l.length > 1);
