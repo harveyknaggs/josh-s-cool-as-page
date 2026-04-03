@@ -2038,7 +2038,6 @@ function deleteDPTask(index) {
 // ---- To Do List ----
 const TODO_STORE_KEY = 'josh-todo-list';
 const TODO_DONE_KEY = 'josh-todo-done-count';
-const TODO_GOAL = 1500;
 
 function loadTodos() {
   try { const s = JSON.parse(localStorage.getItem(TODO_STORE_KEY)); if (Array.isArray(s)) return s; } catch {}
@@ -2080,34 +2079,28 @@ function renderTodos() {
 function renderTodoProgress() {
   const container = document.getElementById('todoProgress');
   const done = loadDoneCount();
-  const pct = Math.min((done / TODO_GOAL) * 100, 100);
-  const isComplete = done >= TODO_GOAL;
-
-  const milestones = [100, 250, 500, 750, 1000, 1250, 1500];
-  const nextMilestone = milestones.find(m => m > done) || TODO_GOAL;
-  const toNext = nextMilestone - done;
+  const inSet = done % 100;
+  const pct = (inSet / 100) * 100;
+  const toNext = 100 - inSet;
+  const setsCompleted = Math.floor(done / 100);
 
   let motivationMsg = '';
   if (done === 0) motivationMsg = 'Get started, legend!';
-  else if (done < 50) motivationMsg = 'Off to a solid start!';
-  else if (done < 100) motivationMsg = 'Building momentum!';
-  else if (done < 250) motivationMsg = 'Absolute machine!';
-  else if (done < 500) motivationMsg = 'Halfway to 500, keep pushing!';
-  else if (done < 750) motivationMsg = 'Over 500 - unstoppable!';
-  else if (done < 1000) motivationMsg = 'Beast mode activated!';
-  else if (done < 1250) motivationMsg = '1000+ done. Legendary stuff!';
-  else if (done < 1500) motivationMsg = 'So close to 1,500!';
-  else motivationMsg = 'You did it. Incredible.';
+  else if (inSet < 20) motivationMsg = 'New set, let\'s go!';
+  else if (inSet < 40) motivationMsg = 'Building momentum!';
+  else if (inSet < 60) motivationMsg = 'Over halfway there!';
+  else if (inSet < 80) motivationMsg = 'Absolute machine!';
+  else motivationMsg = 'Almost at the next 100!';
 
   container.innerHTML = `
     <div class="todo-progress-header">
       <div class="todo-progress-label">${motivationMsg}</div>
-      <div class="todo-progress-count">${done.toLocaleString()} / ${TODO_GOAL.toLocaleString()}</div>
+      <div class="todo-progress-count">${done.toLocaleString()} total</div>
     </div>
     <div class="todo-progress-bar">
-      <div class="todo-progress-fill ${isComplete ? 'complete' : ''}" style="width:${pct}%"></div>
+      <div class="todo-progress-fill" style="width:${pct}%"></div>
     </div>
-    ${!isComplete ? `<div class="todo-milestone"><span>${toNext}</span> more to next milestone (${nextMilestone.toLocaleString()})</div>` : ''}
+    <div class="todo-milestone"><span>${toNext}</span> more to next 100${setsCompleted > 0 ? ` &middot; ${setsCompleted} set${setsCompleted > 1 ? 's' : ''} completed` : ''}</div>
   `;
 }
 
@@ -2136,7 +2129,7 @@ function completeTodo(index) {
 
     renderTodos();
 
-    if (done === TODO_GOAL) {
+    if (done % 100 === 0) {
       document.getElementById('celebrationOverlay').classList.add('show');
     }
   }, 300);
