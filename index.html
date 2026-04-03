@@ -397,12 +397,10 @@
 
     .cal-cell:hover { background: var(--green-bg); }
 
-    .cal-cell.empty {
-      background: var(--surface);
-      cursor: default;
+    .cal-cell.other-month {
+      background: var(--surface2);
+      opacity: 0.5;
     }
-
-    .cal-cell.empty:hover { background: var(--surface); }
 
     .cal-cell.today .cal-date {
       background: var(--green);
@@ -1680,9 +1678,11 @@ function renderCal() {
 
   let html = DAYS_SHORT.map(d => `<div class="cal-day-header">${d}</div>`).join('');
 
-  // Empty cells before 1st
-  for (let i = 0; i < startDay; i++) {
-    html += '<div class="cal-cell empty"></div>';
+  // Prev month fill
+  const prevLast = new Date(viewYear, viewMonth, 0);
+  for (let i = startDay - 1; i >= 0; i--) {
+    const d = new Date(viewYear, viewMonth - 1, prevLast.getDate() - i);
+    html += renderCell(d, true);
   }
 
   // Current month
@@ -1691,11 +1691,12 @@ function renderCal() {
     html += renderCell(d, false);
   }
 
-  // Empty cells after last day
+  // Next month fill
   const totalCells = startDay + lastDay.getDate();
   const remaining = (7 - (totalCells % 7)) % 7;
-  for (let i = 0; i < remaining; i++) {
-    html += '<div class="cal-cell empty"></div>';
+  for (let i = 1; i <= remaining; i++) {
+    const d = new Date(viewYear, viewMonth + 1, i);
+    html += renderCell(d, true);
   }
 
   grid.innerHTML = html;
