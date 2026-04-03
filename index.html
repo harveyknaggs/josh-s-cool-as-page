@@ -1719,7 +1719,7 @@
       background: var(--red-light);
     }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 </head>
 <body>
 
@@ -2778,22 +2778,27 @@ async function extractText() {
 
   btn.disabled = true;
   btn.textContent = 'Extracting...';
+  status.textContent = 'Loading OCR...';
   list.innerHTML = `<div class="ocr-progress">
     Reading whiteboard...<br>
     <div class="ocr-progress-bar"><div class="ocr-progress-fill" id="ocrFill" style="width:0%"></div></div>
+    <div id="ocrStatus" style="margin-top:0.4rem;font-size:0.7rem"></div>
   </div>`;
 
   try {
-    const result = await Tesseract.recognize(img.src, 'eng', {
+    const worker = await Tesseract.createWorker('eng', 1, {
       logger: m => {
-        if (m.status === 'recognizing text') {
-          const fill = document.getElementById('ocrFill');
-          if (fill) fill.style.width = Math.round(m.progress * 100) + '%';
-        }
+        const fill = document.getElementById('ocrFill');
+        const ocrStat = document.getElementById('ocrStatus');
+        if (fill && m.progress) fill.style.width = Math.round(m.progress * 100) + '%';
+        if (ocrStat && m.status) ocrStat.textContent = m.status;
       }
     });
 
-    const lines = result.data.text
+    const { data } = await worker.recognize(img.src);
+    await worker.terminate();
+
+    const lines = data.text
       .split('\n')
       .map(l => l.trim())
       .filter(l => l.length > 1);
@@ -2802,11 +2807,12 @@ async function extractText() {
       saveExtractedJobs(lines);
       status.textContent = `${lines.length} items found`;
     } else {
-      status.textContent = 'No text found';
+      status.textContent = 'No text found - try a clearer photo';
     }
     renderExtractedJobs();
   } catch (err) {
-    list.innerHTML = '<div class="extracted-empty">Failed to read image. Try a clearer photo.</div>';
+    console.error('OCR Error:', err);
+    list.innerHTML = `<div class="extracted-empty">Failed to read image: ${esc(err.message || 'Unknown error')}<br>Try a clearer photo.</div>`;
     status.textContent = 'Error';
   }
 
