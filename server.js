@@ -37,7 +37,7 @@ app.post('/api/extract', async (req, res) => {
           },
           {
             type: 'text',
-            text: 'Read this whiteboard photo. Organize what you see into these 5 categories: "Pre-Sale Maintenance", "Pre-Sale Tidys", "Landscaping Jobs", "Gardening Jobs", "Maintenance". Return ONLY a JSON object where each key is a category name and each value is an array of the addresses/jobs listed under that heading. If a category has no items, use an empty array. Example format: {"Pre-Sale Maintenance": ["23 eastream", "12a bevin"], "Pre-Sale Tidys": ["1 totara"], "Landscaping Jobs": [], "Gardening Jobs": [], "Maintenance": []}. Return only valid JSON, nothing else.'
+            text: 'Read this whiteboard photo. The BLUE text represents category headers and the GREEN text represents job addresses/items. Each green item belongs to the blue header directly above it on the whiteboard. Organize the jobs into these 5 categories: "Pre-Sale Maintenance", "Pre-Sale Tidys", "Landscaping Jobs", "Gardening Jobs", "Maintenance". Return ONLY a JSON object where each key is a category name and each value is an array of the green job addresses listed under that blue heading. If a category has no items, use an empty array. Example: {"Pre-Sale Maintenance": ["23 eastream", "12a bevin"], "Pre-Sale Tidys": ["1 totara"], "Landscaping Jobs": [], "Gardening Jobs": [], "Maintenance": []}. Return only valid JSON, nothing else.'
           }
         ]
       }]
