@@ -922,6 +922,48 @@
       padding: 0.1rem 0;
     }
 
+    .jg-map-failed-place {
+      padding: 0.15rem 0.4rem;
+      background: #fff;
+      color: #991b1b;
+      border: 1px solid #fca5a5;
+      border-radius: 4px;
+      font-size: 0.6rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      margin-left: 0.4rem;
+    }
+
+    .jg-map-failed-place:hover { background: #fef2f2; }
+
+    .jg-map-placing {
+      padding: 0.4rem 0.75rem;
+      background: #dbeafe;
+      border: 1px solid #93c5fd;
+      border-radius: var(--radius);
+      font-size: 0.75rem;
+      color: #1e40af;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 0.5rem;
+    }
+
+    .jg-map-placing button {
+      padding: 0.15rem 0.5rem;
+      background: #fff;
+      color: #1e40af;
+      border: 1px solid #93c5fd;
+      border-radius: 4px;
+      font-size: 0.65rem;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    #jobMapContainer.placing { cursor: crosshair; }
+
     /* ---- Day Detail Modal ---- */
     .day-detail {
       display: none;
@@ -2010,6 +2052,7 @@
         </div>
       </div>
       <div class="jg-container hidden" id="jobGridContainer" ondragover="jgGridDragOver(event)" ondragleave="jgGridDragLeave(event)" ondrop="dropBackFromCalendar(event)"></div>
+      <div class="hidden" id="jobMapPlacing"></div>
       <div class="hidden" id="jobMapContainer"></div>
       <div class="hidden" id="jobMapFailed"></div>
     </div>
@@ -3344,6 +3387,7 @@ let jobMapMarkers = [];
 let mapVisible = false;
 let geocodeQueue = [];
 let geocodeRunning = false;
+let placingJob = null;
 
 function loadGeocodeCache() {
   try { return JSON.parse(localStorage.getItem(GEOCODE_CACHE_KEY)) || {}; } catch { return {}; }
@@ -3401,6 +3445,17 @@ function initJobMap() {
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap contributors'
   }).addTo(jobMap);
+
+  jobMap.on('click', function(e) {
+    if (!placingJob) return;
+    const coords = { lat: e.latlng.lat, lng: e.latlng.lng };
+    const cache = loadGeocodeCache();
+    cache[placingJob.name.toLowerCase().trim()] = coords;
+    saveGeocodeCache(cache);
+    addJobMarker(placingJob, coords);
+    cancelPlaceJob();
+    renderJobMap();
+  });
 }
 
 function addJobMarker(job, coords) {
@@ -3472,9 +3527,34 @@ function renderFailedJobs(failedJobs) {
   }
   el.classList.remove('hidden');
   el.innerHTML = '<div class="jg-map-failed"><div class="jg-map-failed-title">Could not find on map (' + failedJobs.length + '):</div>' +
-    failedJobs.map(j => '<div class="jg-map-failed-item">' + esc(j.name) + ' <span style="color:#b91c1c;opacity:0.6">(' + esc(j.category) + ')</span></div>').join('') +
+    failedJobs.map(j => {
+      const nameEsc = esc(j.name).replace(/'/g, '&#39;');
+      const catEsc = esc(j.category).replace(/'/g, '&#39;');
+      return '<div class="jg-map-failed-item">' + esc(j.name) + ' <span style="color:#b91c1c;opacity:0.6">(' + esc(j.category) + ')</span> ' +
+        '<button class="jg-map-failed-place" onclick="startPlaceJob(\'' + nameEsc + '\', \'' + catEsc + '\')">Place on map</button></div>';
+    }).join('') +
     '</div>';
 }
+
+function startPlaceJob(name, category) {
+  placingJob = { name, category };
+  document.getElementById('jobMapContainer').classList.add('placing');
+  const banner = document.getElementById('jobMapPlacing');
+  banner.classList.remove('hidden');
+  banner.innerHTML = '<div class="jg-map-placing"><span>Click the map to place: <strong>' + esc(name) + '</strong></span><button onclick="cancelPlaceJob()">Cancel</button></div>';
+}
+
+function cancelPlaceJob() {
+  placingJob = null;
+  document.getElementById('jobMapContainer').classList.remove('placing');
+  const banner = document.getElementById('jobMapPlacing');
+  banner.classList.add('hidden');
+  banner.innerHTML = '';
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape' && placingJob) cancelPlaceJob();
+});
 
 function toggleMapView() {
   const mapEl = document.getElementById('jobMapContainer');
@@ -3494,6 +3574,8 @@ function toggleMapView() {
   } else {
     mapEl.classList.add('hidden');
     failedEl.classList.add('hidden');
+    document.getElementById('jobMapPlacing').classList.add('hidden');
+    cancelPlaceJob();
     btn.textContent = 'Show Map';
   }
 }
