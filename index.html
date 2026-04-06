@@ -457,6 +457,12 @@
       color: var(--red);
     }
 
+    .cal-event.job-presale-maint { background: #dbeafe; color: #2563eb; }
+    .cal-event.job-presale-tidy  { background: #dcfce7; color: #16a34a; }
+    .cal-event.job-landscaping   { background: #ffedd5; color: #ea580c; }
+    .cal-event.job-gardening     { background: #f3e8ff; color: #a855f7; }
+    .cal-event.job-maintenance   { background: #fef2f2; color: #dc2626; }
+
     .cal-overflow {
       font-size: 0.6rem;
       color: var(--text-muted);
@@ -783,10 +789,30 @@
     .hidden { display: none !important; }
 
     .jg-container {
+      padding: 0.5rem 0;
+    }
+
+    .jg-section { margin-bottom: 1rem; }
+    .jg-section-header {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.3rem 0;
+      margin-bottom: 0.5rem;
+      border-bottom: 2px solid #ccc;
+      color: var(--text-secondary);
+    }
+    .jg-section-header--presale-maint { border-color: #2563eb; color: #2563eb; }
+    .jg-section-header--presale-tidy  { border-color: #16a34a; color: #16a34a; }
+    .jg-section-header--landscaping   { border-color: #ea580c; color: #ea580c; }
+    .jg-section-header--gardening     { border-color: #a855f7; color: #a855f7; }
+    .jg-section-header--maintenance   { border-color: #dc2626; color: #dc2626; }
+
+    .jg-section-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
       gap: 0.75rem;
-      padding: 1rem 0;
     }
 
     .jg-card {
@@ -913,6 +939,12 @@
     .detail-dot.job { background: var(--green); }
     .detail-dot.reminder { background: var(--orange); }
     .detail-dot.urgent { background: var(--red); }
+
+    .detail-dot.job-presale-maint { background: #2563eb; }
+    .detail-dot.job-presale-tidy  { background: #16a34a; }
+    .detail-dot.job-landscaping   { background: #ea580c; }
+    .detail-dot.job-gardening     { background: #a855f7; }
+    .detail-dot.job-maintenance   { background: #dc2626; }
 
     .detail-info { flex: 1; }
 
@@ -1939,7 +1971,7 @@
           </form>
         </div>
       </div>
-      <div class="jg-container hidden" id="jobGridContainer"></div>
+      <div class="jg-container hidden" id="jobGridContainer" ondragover="jgGridDragOver(event)" ondragleave="jgGridDragLeave(event)" ondrop="dropBackFromCalendar(event)"></div>
     </div>
   </div>
 
@@ -2149,7 +2181,9 @@ function renderCell(date, otherMonth) {
   let evHtml = '';
   const show = events.slice(0, 2);
   show.forEach(e => {
-    evHtml += `<div class="cal-event ${e.type}">${e.time ? formatTime(e.time) + ' ' : ''}${esc(e.title)}</div>`;
+    const isJob = e.type && e.type.startsWith('job');
+    const dragAttr = isJob ? `draggable="true" ondragstart="calEventDragStart(event, '${e.id}')"` : '';
+    evHtml += `<div class="cal-event ${e.type}" ${dragAttr}>${e.time ? formatTime(e.time) + ' ' : ''}${esc(e.title)}</div>`;
   });
   if (events.length > 2) {
     evHtml += `<div class="cal-overflow">+${events.length - 2} more</div>`;
@@ -2162,8 +2196,8 @@ function renderCell(date, otherMonth) {
 }
 
 function updateNav() {
-  const jobs = state.events.filter(e => e.type === 'job').length;
-  const reminders = state.events.filter(e => e.type !== 'job').length;
+  const jobs = state.events.filter(e => e.type && e.type.startsWith('job')).length;
+  const reminders = state.events.filter(e => !e.type || !e.type.startsWith('job')).length;
   document.getElementById('navJobs').textContent = jobs;
   document.getElementById('navReminders').textContent = reminders;
   document.getElementById('navDate').textContent = today().toLocaleDateString('en-NZ', { weekday: 'long', day: 'numeric', month: 'long' });
@@ -2184,17 +2218,20 @@ function openDay(dk) {
   if (events.length === 0) {
     list.innerHTML = '<div class="detail-empty">Nothing scheduled. Tell me in the chat to add something!</div>';
   } else {
-    list.innerHTML = events.map(e => `
-      <div class="detail-event">
+    list.innerHTML = events.map(e => {
+      const isJob = e.type && e.type.startsWith('job');
+      const dragAttr = isJob ? `draggable="true" ondragstart="calEventDragStart(event, '${e.id}')"` : '';
+      const typeLabel = isJob ? e.type.replace('job-', '').replace(/-/g, ' ') : e.type;
+      return `<div class="detail-event" ${dragAttr}>
         <div class="detail-dot ${e.type}"></div>
         <div class="detail-info">
           <div class="detail-name">${esc(e.title)}</div>
-          <div class="detail-meta">${e.time ? formatTime(e.time) : 'All day'} &middot; ${e.type}</div>
+          <div class="detail-meta">${e.time ? formatTime(e.time) : 'All day'} &middot; ${typeLabel}</div>
           ${e.notes ? `<div class="detail-meta">${esc(e.notes)}</div>` : ''}
         </div>
         <button class="detail-delete" onclick="deleteEvent('${e.id}')" title="Delete">&times;</button>
-      </div>
-    `).join('');
+      </div>`;
+    }).join('');
   }
 
   panel.classList.add('open');
@@ -3024,6 +3061,20 @@ const CATEGORY_CSS_CLASS = {
   'Gardening Jobs': 'jg-card--gardening',
   'Maintenance': 'jg-card--maintenance'
 };
+const CATEGORY_EVENT_TYPE = {
+  'Pre-Sale Maintenance': 'job-presale-maint',
+  'Pre-Sale Tidys': 'job-presale-tidy',
+  'Landscaping Jobs': 'job-landscaping',
+  'Gardening Jobs': 'job-gardening',
+  'Maintenance': 'job-maintenance'
+};
+const CATEGORY_HEADER_CLASS = {
+  'Pre-Sale Maintenance': 'jg-section-header--presale-maint',
+  'Pre-Sale Tidys': 'jg-section-header--presale-tidy',
+  'Landscaping Jobs': 'jg-section-header--landscaping',
+  'Gardening Jobs': 'jg-section-header--gardening',
+  'Maintenance': 'jg-section-header--maintenance'
+};
 let editingJobIndex = null;
 let draggedJobIndex = null;
 
@@ -3073,21 +3124,34 @@ function renderJobGrid() {
   }
 
   let html = '';
-  jobs.forEach((job, i) => {
-    const cssClass = CATEGORY_CSS_CLASS[job.category] || '';
-    html += `<div class="jg-card ${cssClass}" draggable="true" data-index="${i}"
-      onclick="openJobModal(${i})"
-      ondragstart="jgDragStart(event, ${i})"
-      ondragend="jgDragEnd(event)"
-      ondragover="jgDragOverCard(event)"
-      ondragleave="jgDragLeaveCard(event)"
-      ondrop="jgDropOnCard(event, ${i})">
-      <div class="jg-card-name">${esc(job.name)}</div>
-      <div class="jg-card-cat">${esc(job.category)}</div>
-      <div class="jg-card-hours">${job.hours ? job.hours + ' hrs' : 'No hours set'}</div>
-      <div class="jg-card-desc">${job.description ? esc(job.description) : 'Click to add details'}</div>
-    </div>`;
+  JOB_CATEGORIES.forEach(cat => {
+    const catJobs = jobs.map((job, i) => ({ ...job, _i: i })).filter(j => j.category === cat);
+    if (catJobs.length === 0) return;
+
+    const headerClass = CATEGORY_HEADER_CLASS[cat] || '';
+    html += `<div class="jg-section">
+      <div class="jg-section-header ${headerClass}">${esc(cat)}</div>
+      <div class="jg-section-grid">`;
+
+    catJobs.forEach(job => {
+      const i = job._i;
+      const cssClass = CATEGORY_CSS_CLASS[job.category] || '';
+      html += `<div class="jg-card ${cssClass}" draggable="true" data-index="${i}"
+        onclick="openJobModal(${i})"
+        ondragstart="jgDragStart(event, ${i})"
+        ondragend="jgDragEnd(event)"
+        ondragover="jgDragOverCard(event)"
+        ondragleave="jgDragLeaveCard(event)"
+        ondrop="jgDropOnCard(event, ${i})">
+        <div class="jg-card-name">${esc(job.name)}</div>
+        <div class="jg-card-hours">${job.hours ? job.hours + ' hrs' : 'No hours set'}</div>
+        <div class="jg-card-desc">${job.description ? esc(job.description) : 'Click to add details'}</div>
+      </div>`;
+    });
+
+    html += `</div></div>`;
   });
+
   container.innerHTML = html;
 }
 
@@ -3167,6 +3231,15 @@ function calDragLeave(e) {
 function dropOnCalendar(e, dk) {
   e.preventDefault();
   e.currentTarget.classList.remove('drop-target');
+
+  // Check if this is a calendar event being moved (not a grid card)
+  const calEventId = e.dataTransfer.getData('calEventId');
+  if (calEventId) {
+    const ev = state.events.find(ev => ev.id === calEventId);
+    if (ev) { ev.date = dk; save(); renderCal(); }
+    return;
+  }
+
   const fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
   if (isNaN(fromIndex)) return;
 
@@ -3174,15 +3247,44 @@ function dropOnCalendar(e, dk) {
   const job = jobs[fromIndex];
   if (!job) return;
 
-  // Add to calendar events
   state.events.push({
     id: uid(),
     title: job.name + (job.hours ? ' (' + job.hours + 'hrs)' : ''),
     date: dk,
     time: null,
-    type: 'job',
+    type: CATEGORY_EVENT_TYPE[job.category] || 'job',
+    jobCategory: job.category,
     notes: job.description || ''
   });
+  save();
+  renderCal();
+}
+
+// Drag calendar events back off
+function calEventDragStart(e, eventId) {
+  e.stopPropagation();
+  e.dataTransfer.setData('calEventId', eventId);
+  e.dataTransfer.effectAllowed = 'move';
+}
+
+function jgGridDragOver(e) {
+  if (e.dataTransfer.types.includes('caleventid')) {
+    e.preventDefault();
+    e.currentTarget.classList.add('drop-target');
+  }
+}
+
+function jgGridDragLeave(e) {
+  e.currentTarget.classList.remove('drop-target');
+}
+
+function dropBackFromCalendar(e) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drop-target');
+  const calEventId = e.dataTransfer.getData('calEventId');
+  if (!calEventId) return;
+
+  state.events = state.events.filter(ev => ev.id !== calEventId);
   save();
   renderCal();
 }
