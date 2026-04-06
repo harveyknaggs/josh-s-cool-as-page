@@ -534,10 +534,9 @@
     .photo-clear-btn:hover { background: var(--surface); }
 
     .photo-content {
-      display: grid;
-      grid-template-columns: 850px 1fr;
+      display: flex;
+      flex-direction: column;
       gap: 1rem;
-      min-height: 700px;
     }
 
     .photo-area {
@@ -603,6 +602,15 @@
       flex: 1;
       padding: 0.75rem 1rem;
       overflow-y: auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0 1.5rem;
+      align-content: start;
+    }
+
+    .extracted-col {
+      display: flex;
+      flex-direction: column;
     }
 
     .extracted-empty {
@@ -2741,18 +2749,12 @@ function saveExtractedJobs(jobs) {
   localStorage.setItem(EXTRACTED_STORE_KEY, JSON.stringify(jobs));
 }
 
-function renderExtractedJobs() {
-  const container = document.getElementById('extractedList');
-  const jobs = loadExtractedJobs();
-  const totalItems = Object.values(jobs).reduce((sum, arr) => sum + arr.length, 0);
+const LEFT_CATEGORIES = ['Pre-Sale Maintenance', 'Landscaping Jobs'];
+const RIGHT_CATEGORIES = ['Pre-Sale Tidys', 'Gardening Jobs', 'Maintenance'];
 
-  if (totalItems === 0) {
-    container.innerHTML = '<div class="extracted-empty">Upload a photo and click "Extract Jobs" to read the whiteboard</div>';
-    return;
-  }
-
+function renderCategoryHTML(cats, jobs) {
   let html = '';
-  JOB_CATEGORIES.forEach(cat => {
+  cats.forEach(cat => {
     const items = jobs[cat] || [];
     html += `<div class="extracted-category">
       <div class="extracted-category-heading">${esc(cat)}</div>`;
@@ -2768,7 +2770,23 @@ function renderExtractedJobs() {
     }
     html += '</div>';
   });
-  container.innerHTML = html;
+  return html;
+}
+
+function renderExtractedJobs() {
+  const container = document.getElementById('extractedList');
+  const jobs = loadExtractedJobs();
+  const totalItems = Object.values(jobs).reduce((sum, arr) => sum + arr.length, 0);
+
+  if (totalItems === 0) {
+    container.innerHTML = '<div class="extracted-empty" style="grid-column:1/-1">Upload a photo and click "Extract Jobs" to read the whiteboard</div>';
+    return;
+  }
+
+  const leftHTML = renderCategoryHTML(LEFT_CATEGORIES, jobs);
+  const rightHTML = renderCategoryHTML(RIGHT_CATEGORIES, jobs);
+
+  container.innerHTML = `<div class="extracted-col">${leftHTML}</div><div class="extracted-col">${rightHTML}</div>`;
 }
 
 function updateExtractedItem(cat, index, value) {
