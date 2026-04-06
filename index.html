@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Josh's Landscaping CRM</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
@@ -883,6 +885,22 @@
       background: var(--green-bg) !important;
       outline: 2px solid var(--green);
       outline-offset: -2px;
+    }
+
+    /* ---- Job Map ---- */
+    .job-marker {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: 3px solid #fff;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    }
+
+    #jobMapContainer {
+      height: 500px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      margin-top: 0.5rem;
     }
 
     /* ---- Day Detail Modal ---- */
@@ -1945,6 +1963,7 @@
           </span>
           <span id="gridViewBtns" style="display:none">
             <button class="jg-back-btn" onclick="backToPhoto()">Back to Photo</button>
+            <button class="jg-confirm-btn" id="mapToggleBtn" onclick="toggleMapView()">Show Map</button>
           </span>
         </div>
       </div>
@@ -1972,6 +1991,7 @@
         </div>
       </div>
       <div class="jg-container hidden" id="jobGridContainer" ondragover="jgGridDragOver(event)" ondragleave="jgGridDragLeave(event)" ondrop="dropBackFromCalendar(event)"></div>
+      <div class="hidden" id="jobMapContainer"></div>
     </div>
   </div>
 
@@ -3287,6 +3307,158 @@ function dropBackFromCalendar(e) {
   state.events = state.events.filter(ev => ev.id !== calEventId);
   save();
   renderCal();
+}
+
+// ---- Job Map ----
+const GEOCODE_CACHE_KEY = 'josh-geocode-cache';
+const CATEGORY_MARKER_COLOR = {
+  'Pre-Sale Maintenance': '#2563eb',
+  'Pre-Sale Tidys': '#16a34a',
+  'Landscaping Jobs': '#ea580c',
+  'Gardening Jobs': '#a855f7',
+  'Maintenance': '#dc2626'
+};
+
+let jobMap = null;
+let jobMapMarkers = [];
+let mapVisible = false;
+let geocodeQueue = [];
+let geocodeRunning = false;
+
+function loadGeocodeCache() {
+  try { return JSON.parse(localStorage.getItem(GEOCODE_CACHE_KEY)) || {}; } catch { return {}; }
+}
+
+function saveGeocodeCache(cache) {
+  localStorage.setItem(GEOCODE_CACHE_KEY, JSON.stringify(cache));
+}
+
+async function geocodeAddress(address) {
+  const cache = loadGeocodeCache();
+  const key = address.toLowerCase().trim();
+  if (cache[key]) return cache[key];
+
+  let query = address;
+  if (!/christchurch/i.test(query)) query += ', Christchurch, New Zealand';
+
+  try {
+    const resp = await fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(query) + '&limit=1', {
+      headers: { 'User-Agent': 'JoshLandscapingCRM/1.0' }
+    });
+    const data = await resp.json();
+    if (data.length > 0) {
+      const result = { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+      cache[key] = result;
+      saveGeocodeCache(cache);
+      return result;
+    }
+  } catch {}
+  return null;
+}
+
+async function processGeocodeQueue() {
+  if (geocodeRunning) return;
+  geocodeRunning = true;
+  while (geocodeQueue.length > 0) {
+    const { address, resolve } = geocodeQueue.shift();
+    const result = await geocodeAddress(address);
+    resolve(result);
+    if (geocodeQueue.length > 0) await new Promise(r => setTimeout(r, 1100));
+  }
+  geocodeRunning = false;
+}
+
+function queueGeocode(address) {
+  return new Promise(resolve => {
+    geocodeQueue.push({ address, resolve });
+    processGeocodeQueue();
+  });
+}
+
+function initJobMap() {
+  if (jobMap) return;
+  jobMap = L.map('jobMapContainer').setView([-43.532, 172.6306], 12);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(jobMap);
+}
+
+function addJobMarker(job, coords) {
+  const color = CATEGORY_MARKER_COLOR[job.category] || '#666';
+  const icon = L.divIcon({
+    className: '',
+    html: '<div class="job-marker" style="background:' + color + '"></div>',
+    iconSize: [24, 24],
+    iconAnchor: [12, 12],
+    popupAnchor: [0, -14]
+  });
+
+  const marker = L.marker([coords.lat, coords.lng], { icon })
+    .addTo(jobMap)
+    .bindPopup('<strong>' + esc(job.name) + '</strong><br><span style="color:' + color + '">' + esc(job.category) + '</span>' + (job.hours ? '<br>' + job.hours + ' hrs' : ''));
+
+  jobMapMarkers.push(marker);
+}
+
+async function renderJobMap() {
+  initJobMap();
+
+  jobMapMarkers.forEach(m => jobMap.removeLayer(m));
+  jobMapMarkers = [];
+
+  const jobs = loadJobGrid();
+  const cache = loadGeocodeCache();
+  const needsGeocoding = [];
+
+  jobs.forEach(job => {
+    if (!job.name) return;
+    const key = job.name.toLowerCase().trim();
+    const coords = cache[key];
+    if (coords) {
+      addJobMarker(job, coords);
+    } else {
+      needsGeocoding.push(job);
+    }
+  });
+
+  if (jobMapMarkers.length > 0) {
+    jobMap.fitBounds(L.featureGroup(jobMapMarkers).getBounds().pad(0.1));
+  }
+
+  for (const job of needsGeocoding) {
+    const coords = await queueGeocode(job.name);
+    if (coords) {
+      addJobMarker(job, coords);
+      if (jobMapMarkers.length === 1) {
+        jobMap.setView([coords.lat, coords.lng], 14);
+      } else {
+        jobMap.fitBounds(L.featureGroup(jobMapMarkers).getBounds().pad(0.1));
+      }
+    }
+  }
+}
+
+function toggleMapView() {
+  const mapEl = document.getElementById('jobMapContainer');
+  const gridEl = document.getElementById('jobGridContainer');
+  const btn = document.getElementById('mapToggleBtn');
+
+  mapVisible = !mapVisible;
+
+  if (mapVisible) {
+    gridEl.classList.add('hidden');
+    mapEl.classList.remove('hidden');
+    btn.textContent = 'Show Jobs';
+    setTimeout(() => {
+      initJobMap();
+      jobMap.invalidateSize();
+      renderJobMap();
+    }, 100);
+  } else {
+    mapEl.classList.add('hidden');
+    gridEl.classList.remove('hidden');
+    btn.textContent = 'Show Map';
+  }
 }
 
 // ---- Init ----
