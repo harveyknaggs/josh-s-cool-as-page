@@ -37,15 +37,27 @@ app.post('/api/extract', async (req, res) => {
           },
           {
             type: 'text',
-            text: 'Read this whiteboard photo. List every job, address, or item you can see, one per line. Include any section headers (like "Landscaping Jobs", "Gardening Jobs", "Maintenance" etc). Return only the text you can read, no numbering, no bullet points, no extra commentary.'
+            text: 'Read this whiteboard photo. Organize what you see into these 5 categories: "Pre-Sale Maintenance", "Pre-Sale Tidys", "Landscaping Jobs", "Gardening Jobs", "Maintenance". Return ONLY a JSON object where each key is a category name and each value is an array of the addresses/jobs listed under that heading. If a category has no items, use an empty array. Example format: {"Pre-Sale Maintenance": ["23 eastream", "12a bevin"], "Pre-Sale Tidys": ["1 totara"], "Landscaping Jobs": [], "Gardening Jobs": [], "Maintenance": []}. Return only valid JSON, nothing else.'
           }
         ]
       }]
     });
 
     const text = response.content[0].text;
-    const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
 
+    // Try to parse as JSON categories
+    try {
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const categories = JSON.parse(jsonMatch[0]);
+        return res.json({ categories });
+      }
+    } catch (parseErr) {
+      console.error('JSON parse failed, falling back to lines:', parseErr.message);
+    }
+
+    // Fallback: return as flat lines
+    const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
     res.json({ lines });
   } catch (err) {
     console.error('Claude API error:', err.message);

@@ -612,6 +612,19 @@
       padding: 2rem 1rem;
     }
 
+    .extracted-category {
+      margin-bottom: 0.75rem;
+    }
+
+    .extracted-category-heading {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text);
+      padding: 0.4rem 0 0.25rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 0.25rem;
+    }
+
     .extracted-item {
       display: flex;
       align-items: center;
@@ -2705,9 +2718,23 @@ function clearPhoto() {
   document.getElementById('extractBtn').disabled = true;
 }
 
+const JOB_CATEGORIES = ['Pre-Sale Maintenance', 'Pre-Sale Tidys', 'Landscaping Jobs', 'Gardening Jobs', 'Maintenance'];
+
 function loadExtractedJobs() {
-  try { const s = JSON.parse(localStorage.getItem(EXTRACTED_STORE_KEY)); if (Array.isArray(s)) return s; } catch {}
-  return [];
+  try {
+    const s = JSON.parse(localStorage.getItem(EXTRACTED_STORE_KEY));
+    if (s && typeof s === 'object' && !Array.isArray(s)) return s;
+    // Migrate old flat array format
+    if (Array.isArray(s) && s.length > 0) {
+      const migrated = {};
+      JOB_CATEGORIES.forEach(c => migrated[c] = []);
+      migrated[JOB_CATEGORIES[0]] = s;
+      return migrated;
+    }
+  } catch {}
+  const empty = {};
+  JOB_CATEGORIES.forEach(c => empty[c] = []);
+  return empty;
 }
 
 function saveExtractedJobs(jobs) {
@@ -2717,32 +2744,42 @@ function saveExtractedJobs(jobs) {
 function renderExtractedJobs() {
   const container = document.getElementById('extractedList');
   const jobs = loadExtractedJobs();
+  const totalItems = Object.values(jobs).reduce((sum, arr) => sum + arr.length, 0);
 
-  if (jobs.length === 0) {
+  if (totalItems === 0) {
     container.innerHTML = '<div class="extracted-empty">Upload a photo and click "Extract Jobs" to read the whiteboard</div>';
     return;
   }
 
   let html = '';
-  jobs.forEach((job, i) => {
-    html += `<div class="extracted-item">
-      <input type="text" value="${esc(job)}" onchange="updateExtractedItem(${i}, this.value)">
-      <button class="extracted-item-schedule" onclick="scheduleExtractedJob(${i})" title="Send to assistant">&#9654;</button>
-      <button class="extracted-item-delete" onclick="deleteExtractedItem(${i})" title="Remove">&times;</button>
-    </div>`;
+  JOB_CATEGORIES.forEach(cat => {
+    const items = jobs[cat] || [];
+    html += `<div class="extracted-category">
+      <div class="extracted-category-heading">${esc(cat)}</div>`;
+    items.forEach((job, i) => {
+      html += `<div class="extracted-item">
+        <input type="text" value="${esc(job)}" onchange="updateExtractedItem('${esc(cat)}', ${i}, this.value)">
+        <button class="extracted-item-schedule" onclick="scheduleExtractedJob('${esc(cat)}', ${i})" title="Send to assistant">&#9654;</button>
+        <button class="extracted-item-delete" onclick="deleteExtractedItem('${esc(cat)}', ${i})" title="Remove">&times;</button>
+      </div>`;
+    });
+    if (items.length === 0) {
+      html += '<div style="font-size:0.7rem;color:var(--text-muted);padding:0.2rem 0;font-style:italic">No jobs</div>';
+    }
+    html += '</div>';
   });
   container.innerHTML = html;
 }
 
-function updateExtractedItem(index, value) {
+function updateExtractedItem(cat, index, value) {
   const jobs = loadExtractedJobs();
-  jobs[index] = value;
+  if (jobs[cat]) jobs[cat][index] = value;
   saveExtractedJobs(jobs);
 }
 
-function deleteExtractedItem(index) {
+function deleteExtractedItem(cat, index) {
   const jobs = loadExtractedJobs();
-  jobs.splice(index, 1);
+  if (jobs[cat]) jobs[cat].splice(index, 1);
   saveExtractedJobs(jobs);
   renderExtractedJobs();
 }
@@ -2753,15 +2790,16 @@ function addExtractedItem(e) {
   const text = input.value.trim();
   if (!text) return;
   const jobs = loadExtractedJobs();
-  jobs.push(text);
+  // Add to first category by default
+  jobs[JOB_CATEGORIES[0]].push(text);
   saveExtractedJobs(jobs);
   input.value = '';
   renderExtractedJobs();
 }
 
-function scheduleExtractedJob(index) {
+function scheduleExtractedJob(cat, index) {
   const jobs = loadExtractedJobs();
-  const job = jobs[index];
+  const job = jobs[cat][index];
   const chatInput = document.getElementById('chatInput');
   chatInput.value = job;
   chatInput.focus();
@@ -2791,11 +2829,20 @@ async function extractText() {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Server error');
 
-    const lines = data.lines;
-
-    if (lines.length > 0) {
-      saveExtractedJobs(lines);
-      status.textContent = lines.length + ' items found';
+    if (data.categories) {
+      // Ensure all categories exist
+      const cats = {};
+      JOB_CATEGORIES.forEach(c => cats[c] = data.categories[c] || []);
+      saveExtractedJobs(cats);
+      const total = Object.values(cats).reduce((s, a) => s + a.length, 0);
+      status.textContent = total + ' items found';
+    } else if (data.lines && data.lines.length > 0) {
+      // Fallback flat list
+      const cats = {};
+      JOB_CATEGORIES.forEach(c => cats[c] = []);
+      cats[JOB_CATEGORIES[0]] = data.lines;
+      saveExtractedJobs(cats);
+      status.textContent = data.lines.length + ' items found';
     } else {
       status.textContent = 'No text found - try a clearer photo';
     }
