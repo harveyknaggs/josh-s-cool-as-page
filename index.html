@@ -779,6 +779,86 @@
       transition: width 0.3s ease;
     }
 
+    /* ---- JOB GRID ---- */
+    .hidden { display: none !important; }
+
+    .jg-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 0.75rem;
+      padding: 1rem 0;
+    }
+
+    .jg-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 4px solid #ccc;
+      border-radius: var(--radius);
+      padding: 0.65rem 0.75rem;
+      cursor: grab;
+      box-shadow: var(--shadow);
+      transition: box-shadow 0.15s, opacity 0.15s;
+      user-select: none;
+    }
+
+    .jg-card:hover { box-shadow: var(--shadow-lg); }
+    .jg-card:active { cursor: grabbing; }
+    .jg-card.dragging { opacity: 0.4; }
+    .jg-card.drag-over { border-top: 2px solid var(--green); }
+
+    .jg-card--presale-maint { border-left-color: #2563eb; }
+    .jg-card--presale-tidy { border-left-color: #16a34a; }
+    .jg-card--landscaping { border-left-color: #ea580c; }
+    .jg-card--gardening { border-left-color: #a855f7; }
+    .jg-card--maintenance { border-left-color: #dc2626; }
+
+    .jg-card-name { font-weight: 600; font-size: 0.8rem; }
+    .jg-card-cat { font-size: 0.6rem; color: var(--text-muted); margin-top: 0.1rem; }
+    .jg-card-hours { font-size: 0.7rem; color: var(--text-secondary); margin-top: 0.3rem; }
+    .jg-card-desc {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      margin-top: 0.2rem;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+
+    .jg-confirm-btn {
+      padding: 0.35rem 0.65rem;
+      background: #2563eb;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .jg-confirm-btn:hover { background: #1d4ed8; }
+
+    .jg-back-btn {
+      padding: 0.35rem 0.65rem;
+      background: var(--surface2);
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .jg-back-btn:hover { background: var(--surface); }
+
+    .cal-cell.drop-target {
+      background: var(--green-bg) !important;
+      outline: 2px solid var(--green);
+      outline-offset: -2px;
+    }
+
     /* ---- Day Detail Modal ---- */
     .day-detail {
       display: none;
@@ -1824,13 +1904,19 @@
       <div class="photo-header">
         <div class="photo-title">Job Board</div>
         <div class="photo-actions">
-          <label class="photo-upload-btn" for="photoUpload">Upload Photo</label>
-          <input type="file" id="photoUpload" accept="image/*" onchange="handlePhotoUpload(event)" style="display:none">
-          <button class="photo-extract-btn" id="extractBtn" onclick="extractText()" disabled>Extract Jobs</button>
-          <button class="photo-clear-btn" onclick="clearPhoto()">Clear</button>
+          <span id="photoViewBtns">
+            <label class="photo-upload-btn" for="photoUpload">Upload Photo</label>
+            <input type="file" id="photoUpload" accept="image/*" onchange="handlePhotoUpload(event)" style="display:none">
+            <button class="photo-extract-btn" id="extractBtn" onclick="extractText()" disabled>Extract Jobs</button>
+            <button class="photo-clear-btn" onclick="clearPhoto()">Clear</button>
+            <button class="jg-confirm-btn" id="confirmJobsBtn" onclick="confirmJobs()" style="display:none">Confirm Jobs</button>
+          </span>
+          <span id="gridViewBtns" style="display:none">
+            <button class="jg-back-btn" onclick="backToPhoto()">Back to Photo</button>
+          </span>
         </div>
       </div>
-      <div class="photo-content">
+      <div class="photo-content" id="photoContent">
         <div class="photo-area" id="photoArea">
           <div class="photo-placeholder" id="photoPlaceholder">
             <div class="photo-placeholder-icon">&#128247;</div>
@@ -1853,6 +1939,7 @@
           </form>
         </div>
       </div>
+      <div class="jg-container hidden" id="jobGridContainer"></div>
     </div>
   </div>
 
@@ -2068,7 +2155,7 @@ function renderCell(date, otherMonth) {
     evHtml += `<div class="cal-overflow">+${events.length - 2} more</div>`;
   }
 
-  return `<div class="cal-cell ${otherMonth ? 'other-month' : ''} ${isToday ? 'today' : ''}" onclick="openDay('${dk}')">
+  return `<div class="cal-cell ${otherMonth ? 'other-month' : ''} ${isToday ? 'today' : ''}" onclick="openDay('${dk}')" ondragover="calDragOver(event)" ondragleave="calDragLeave(event)" ondrop="dropOnCalendar(event, '${dk}')">
     <div class="cal-date">${date.getDate()}</div>
     <div class="cal-events">${evHtml}</div>
   </div>`;
@@ -2812,6 +2899,9 @@ function renderExtractedJobs() {
   const rightHTML = renderCategoryHTML(RIGHT_CATEGORIES, jobs);
 
   container.innerHTML = `<div class="extracted-col">${leftHTML}</div><div class="extracted-col">${rightHTML}</div>`;
+
+  const confirmBtn = document.getElementById('confirmJobsBtn');
+  if (confirmBtn) confirmBtn.style.display = totalItems > 0 ? 'inline-block' : 'none';
 }
 
 function updateExtractedItem(cat, index, value) {
@@ -2925,6 +3015,178 @@ function initPhoto() {
   });
 }
 
+// ---- Job Grid ----
+const JOB_GRID_STORE_KEY = 'josh-job-grid';
+const CATEGORY_CSS_CLASS = {
+  'Pre-Sale Maintenance': 'jg-card--presale-maint',
+  'Pre-Sale Tidys': 'jg-card--presale-tidy',
+  'Landscaping Jobs': 'jg-card--landscaping',
+  'Gardening Jobs': 'jg-card--gardening',
+  'Maintenance': 'jg-card--maintenance'
+};
+let editingJobIndex = null;
+let draggedJobIndex = null;
+
+function loadJobGrid() {
+  try { const s = JSON.parse(localStorage.getItem(JOB_GRID_STORE_KEY)); if (Array.isArray(s)) return s; } catch {}
+  return [];
+}
+
+function saveJobGrid(jobs) {
+  localStorage.setItem(JOB_GRID_STORE_KEY, JSON.stringify(jobs));
+}
+
+function confirmJobs() {
+  const extracted = loadExtractedJobs();
+  const jobs = [];
+  JOB_CATEGORIES.forEach(cat => {
+    (extracted[cat] || []).forEach(name => {
+      jobs.push({ name, category: cat, hours: 0, description: '' });
+    });
+  });
+  saveJobGrid(jobs);
+  showJobGridView();
+}
+
+function showJobGridView() {
+  document.getElementById('photoContent').classList.add('hidden');
+  document.getElementById('jobGridContainer').classList.remove('hidden');
+  document.getElementById('photoViewBtns').style.display = 'none';
+  document.getElementById('gridViewBtns').style.display = 'inline';
+  renderJobGrid();
+}
+
+function backToPhoto() {
+  document.getElementById('photoContent').classList.remove('hidden');
+  document.getElementById('jobGridContainer').classList.add('hidden');
+  document.getElementById('photoViewBtns').style.display = 'inline';
+  document.getElementById('gridViewBtns').style.display = 'none';
+}
+
+function renderJobGrid() {
+  const container = document.getElementById('jobGridContainer');
+  const jobs = loadJobGrid();
+
+  if (jobs.length === 0) {
+    container.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--text-muted)">No jobs confirmed yet.</div>';
+    return;
+  }
+
+  let html = '';
+  jobs.forEach((job, i) => {
+    const cssClass = CATEGORY_CSS_CLASS[job.category] || '';
+    html += `<div class="jg-card ${cssClass}" draggable="true" data-index="${i}"
+      onclick="openJobModal(${i})"
+      ondragstart="jgDragStart(event, ${i})"
+      ondragend="jgDragEnd(event)"
+      ondragover="jgDragOverCard(event)"
+      ondragleave="jgDragLeaveCard(event)"
+      ondrop="jgDropOnCard(event, ${i})">
+      <div class="jg-card-name">${esc(job.name)}</div>
+      <div class="jg-card-cat">${esc(job.category)}</div>
+      <div class="jg-card-hours">${job.hours ? job.hours + ' hrs' : 'No hours set'}</div>
+      <div class="jg-card-desc">${job.description ? esc(job.description) : 'Click to add details'}</div>
+    </div>`;
+  });
+  container.innerHTML = html;
+}
+
+// Edit modal
+function openJobModal(index) {
+  editingJobIndex = index;
+  const jobs = loadJobGrid();
+  const job = jobs[index];
+  document.getElementById('jgModalTitle').textContent = job.name;
+  document.getElementById('jgName').value = job.name;
+  document.getElementById('jgHours').value = job.hours || '';
+  document.getElementById('jgDesc').value = job.description || '';
+  document.getElementById('jgModalOverlay').style.display = 'flex';
+}
+
+function closeJobModal() {
+  document.getElementById('jgModalOverlay').style.display = 'none';
+  editingJobIndex = null;
+}
+
+function saveJobDetails() {
+  if (editingJobIndex === null) return;
+  const jobs = loadJobGrid();
+  jobs[editingJobIndex].name = document.getElementById('jgName').value.trim() || jobs[editingJobIndex].name;
+  jobs[editingJobIndex].hours = parseFloat(document.getElementById('jgHours').value) || 0;
+  jobs[editingJobIndex].description = document.getElementById('jgDesc').value.trim();
+  saveJobGrid(jobs);
+  renderJobGrid();
+  closeJobModal();
+}
+
+// Drag within grid (rearrange)
+function jgDragStart(e, index) {
+  draggedJobIndex = index;
+  e.dataTransfer.setData('text/plain', index);
+  e.dataTransfer.effectAllowed = 'move';
+  setTimeout(() => e.target.classList.add('dragging'), 0);
+}
+
+function jgDragEnd(e) {
+  e.target.classList.remove('dragging');
+  draggedJobIndex = null;
+}
+
+function jgDragOverCard(e) {
+  e.preventDefault();
+  e.currentTarget.classList.add('drag-over');
+}
+
+function jgDragLeaveCard(e) {
+  e.currentTarget.classList.remove('drag-over');
+}
+
+function jgDropOnCard(e, targetIndex) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  const fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
+  if (isNaN(fromIndex) || fromIndex === targetIndex) return;
+
+  const jobs = loadJobGrid();
+  const [moved] = jobs.splice(fromIndex, 1);
+  jobs.splice(targetIndex, 0, moved);
+  saveJobGrid(jobs);
+  renderJobGrid();
+}
+
+// Drag onto calendar
+function calDragOver(e) {
+  e.preventDefault();
+  e.currentTarget.classList.add('drop-target');
+}
+
+function calDragLeave(e) {
+  e.currentTarget.classList.remove('drop-target');
+}
+
+function dropOnCalendar(e, dk) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drop-target');
+  const fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
+  if (isNaN(fromIndex)) return;
+
+  const jobs = loadJobGrid();
+  const job = jobs[fromIndex];
+  if (!job) return;
+
+  // Add to calendar events
+  state.events.push({
+    id: uid(),
+    title: job.name + (job.hours ? ' (' + job.hours + 'hrs)' : ''),
+    date: dk,
+    time: null,
+    type: 'job',
+    notes: job.description || ''
+  });
+  save();
+  renderCal();
+}
+
 // ---- Init ----
 renderGoals();
 renderTodos();
@@ -2932,6 +3194,11 @@ renderDPTabs();
 renderDPTasks();
 initCal();
 initPhoto();
+
+// Restore grid view if data exists
+if (loadJobGrid().length > 0) {
+  showJobGridView();
+}
 </script>
 
 <!-- Goal Modal -->
@@ -3005,6 +3272,29 @@ initPhoto();
   <div class="goal-congrats-text">Congratulations!</div>
   <div class="goal-congrats-name" id="goalCongratsName"></div>
   <div class="goal-congrats-dismiss">click anywhere to close</div>
+</div>
+
+<!-- Job Grid Edit Modal -->
+<div class="goal-modal-overlay" id="jgModalOverlay" style="display:none" onclick="if(event.target===this)closeJobModal()">
+  <div class="goal-modal" style="width:380px">
+    <h3 style="font-size:1rem;margin-bottom:1rem" id="jgModalTitle">Edit Job</h3>
+    <div class="gm-field">
+      <label class="gm-label">Job Name</label>
+      <input class="gm-input" type="text" id="jgName">
+    </div>
+    <div class="gm-field">
+      <label class="gm-label">Hours</label>
+      <input class="gm-input" type="number" id="jgHours" min="0" step="0.5" placeholder="e.g. 2.5">
+    </div>
+    <div class="gm-field">
+      <label class="gm-label">Description / Notes</label>
+      <textarea class="gm-textarea" id="jgDesc" rows="3" placeholder="What needs doing..."></textarea>
+    </div>
+    <div class="gm-actions">
+      <button class="gm-cancel" onclick="closeJobModal()">Cancel</button>
+      <button class="gm-save" onclick="saveJobDetails()">Save</button>
+    </div>
+  </div>
 </div>
 
 <div class="celebration-overlay" id="celebrationOverlay" onclick="this.classList.remove('show')">
