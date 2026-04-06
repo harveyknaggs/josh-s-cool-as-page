@@ -2039,7 +2039,7 @@ const DAYS_SHORT = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 const DAYS_FULL = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 
 function today() { return new Date(); }
-function dateKey(d) { return d.toISOString().split('T')[0]; }
+function dateKey(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
 function sameDay(a, b) { return dateKey(a) === dateKey(b); }
 
 function parseRelativeDay(text) {
