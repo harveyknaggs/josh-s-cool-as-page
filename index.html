@@ -534,8 +534,8 @@
     .photo-clear-btn:hover { background: var(--surface); }
 
     .photo-content {
-      display: flex;
-      flex-direction: column;
+      display: grid;
+      grid-template-columns: 850px 1fr;
       gap: 1rem;
     }
 
@@ -589,6 +589,28 @@
       border-bottom: 1px solid var(--border);
       font-size: 0.85rem;
       font-weight: 700;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .extracted-clear-btn {
+      padding: 0.25rem 0.5rem;
+      background: var(--surface2);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      font-size: 0.65rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+
+    .extracted-clear-btn:hover {
+      color: var(--red);
+      border-color: var(--red);
+      background: var(--red-light);
     }
 
     .extracted-status {
@@ -1818,7 +1840,10 @@
           <img id="photoImg" style="display:none">
         </div>
         <div class="extracted-panel">
-          <div class="extracted-header">Extracted Jobs <span class="extracted-status" id="extractedStatus"></span></div>
+          <div class="extracted-header">
+            <div>Extracted Jobs <span class="extracted-status" id="extractedStatus"></span></div>
+            <button class="extracted-clear-btn" onclick="clearAllExtracted()">Clear All</button>
+          </div>
           <div class="extracted-list" id="extractedList">
             <div class="extracted-empty">Upload a photo and click "Extract Jobs" to read the whiteboard</div>
           </div>
@@ -2812,6 +2837,14 @@ function addExtractedItem(e) {
   jobs[JOB_CATEGORIES[0]].push(text);
   saveExtractedJobs(jobs);
   input.value = '';
+  renderExtractedJobs();
+}
+
+function clearAllExtracted() {
+  const empty = {};
+  JOB_CATEGORIES.forEach(c => empty[c] = []);
+  saveExtractedJobs(empty);
+  document.getElementById('extractedStatus').textContent = '';
   renderExtractedJobs();
 }
 
