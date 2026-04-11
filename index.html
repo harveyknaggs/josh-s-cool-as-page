@@ -964,6 +964,197 @@
 
     #jobMapContainer.placing { cursor: crosshair; }
 
+    /* ---- Daily Overview ---- */
+    .daily-overview-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+      margin-bottom: 1rem;
+      box-shadow: var(--shadow);
+    }
+
+    .do-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.6rem;
+    }
+
+    .do-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .do-date {
+      font-weight: 500;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      margin-left: 0.3rem;
+    }
+
+    .do-actions { display: flex; gap: 0.5rem; }
+
+    .do-crew-btn {
+      padding: 0.4rem 0.75rem;
+      background: var(--surface2);
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .do-crew-btn:hover { background: var(--surface); }
+
+    .do-suggest-btn {
+      padding: 0.4rem 0.9rem;
+      background: linear-gradient(135deg, #6366f1, #a855f7);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      box-shadow: 0 2px 6px rgba(99, 102, 241, 0.3);
+    }
+
+    .do-suggest-btn:hover { filter: brightness(1.1); }
+    .do-suggest-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    .do-textarea {
+      width: 100%;
+      min-height: 120px;
+      padding: 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 0.85rem;
+      line-height: 1.5;
+      resize: vertical;
+      background: var(--surface2);
+      color: var(--text);
+      box-sizing: border-box;
+    }
+
+    .do-textarea:focus {
+      outline: none;
+      border-color: #6366f1;
+    }
+
+    .do-suggestion {
+      margin-top: 0.75rem;
+      padding: 0.75rem;
+      background: #eef2ff;
+      border: 1px solid #c7d2fe;
+      border-radius: 6px;
+    }
+
+    .do-suggestion-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+      font-size: 0.8rem;
+      color: #4338ca;
+    }
+
+    .do-suggestion-header > div { display: flex; gap: 0.4rem; }
+
+    .do-use-btn {
+      padding: 0.25rem 0.6rem;
+      background: #4338ca;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .do-use-btn:hover { background: #3730a3; }
+
+    .do-dismiss-btn {
+      padding: 0.25rem 0.6rem;
+      background: #fff;
+      color: #4338ca;
+      border: 1px solid #c7d2fe;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .do-dismiss-btn:hover { background: #eef2ff; }
+
+    .do-suggestion-body {
+      font-size: 0.85rem;
+      line-height: 1.5;
+      color: var(--text);
+      white-space: pre-wrap;
+    }
+
+    /* ---- Crew Modal ---- */
+    .crew-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 2fr 1fr 0.8fr auto auto;
+      gap: 0.4rem;
+      align-items: center;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .crew-row input[type="text"] {
+      padding: 0.35rem 0.5rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-family: inherit;
+      background: var(--surface2);
+      color: var(--text);
+      min-width: 0;
+    }
+
+    .crew-row label {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .crew-row-delete {
+      padding: 0.25rem 0.5rem;
+      background: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .crew-add-btn {
+      margin-top: 0.75rem;
+      padding: 0.4rem 0.75rem;
+      background: var(--surface2);
+      color: var(--text-secondary);
+      border: 1px dashed var(--border);
+      border-radius: 6px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      font-family: inherit;
+      width: 100%;
+    }
+
+    .crew-add-btn:hover { background: var(--surface); }
+
     /* ---- Day Detail Modal ---- */
     .day-detail {
       display: none;
@@ -2007,6 +2198,28 @@
           <button class="close-btn" onclick="closeDayDetail()">&times;</button>
         </div>
         <div id="dayDetailList"></div>
+      </div>
+    </div>
+
+    <!-- Daily Overview -->
+    <div class="daily-overview-panel">
+      <div class="do-header">
+        <div class="do-title">Daily Overview <span class="do-date" id="doDate"></span></div>
+        <div class="do-actions">
+          <button class="do-crew-btn" onclick="openCrewModal()">Manage Crew</button>
+          <button class="do-suggest-btn" id="doSuggestBtn" onclick="suggestDailyPlan()">Suggest Plan</button>
+        </div>
+      </div>
+      <textarea class="do-textarea" id="doTextarea" placeholder="Write today's plan for the team..." oninput="onDailyOverviewInput()"></textarea>
+      <div class="do-suggestion hidden" id="doSuggestion">
+        <div class="do-suggestion-header">
+          <strong>AI Suggestion</strong>
+          <div>
+            <button class="do-use-btn" onclick="useSuggestion()">Use This</button>
+            <button class="do-dismiss-btn" onclick="dismissSuggestion()">Dismiss</button>
+          </div>
+        </div>
+        <div class="do-suggestion-body" id="doSuggestionBody"></div>
       </div>
     </div>
 
@@ -3580,13 +3793,209 @@ function toggleMapView() {
   }
 }
 
+// ---- Daily Overview + Crew ----
+const CREW_STORE_KEY = 'josh-crew';
+const DAILY_OVERVIEW_STORE_KEY = 'josh-daily-overview';
+
+const SEED_CREW = [
+  { name: 'Roy', role: 'Owner', strengths: 'Sales, quoting, client relationships, business operations, growth strategy', tools: '', truck: '', canDrive: true },
+  { name: 'Josh', role: 'Manager', strengths: 'Daily operations, job execution, team coordination, quality control', tools: '', truck: '', canDrive: true },
+  { name: 'Harvey', role: 'Labourer + AI/Automation', strengths: 'On-site labour, systems/automation development', tools: '', truck: '', canDrive: true },
+  { name: 'Paul', role: 'Top Performer', strengths: 'High reliability, complex jobs, leading by example', tools: '', truck: '', canDrive: true },
+  { name: 'Samuel', role: 'All-Rounder', strengths: 'Flexible across gardening and landscaping', tools: '', truck: '', canDrive: true },
+  { name: 'Sam', role: 'Gardening Specialist', strengths: 'Planting, trimming, detailing, maintenance', tools: '', truck: '', canDrive: false },
+  { name: 'Vili', role: 'Hard Landscaping Specialist', strengths: 'Boxing, prep, installs, heavy work', tools: '', truck: '', canDrive: true },
+  { name: 'Will', role: 'Hard Landscaping Specialist', strengths: 'Hardscapes, physical builds', tools: '', truck: '', canDrive: true },
+  { name: 'Jordan', role: 'General Labourer', strengths: 'Support across jobs', tools: '', truck: '', canDrive: false },
+  { name: 'Gio', role: 'General Labourer', strengths: 'Support across jobs', tools: '', truck: '', canDrive: false }
+];
+
+function loadCrew() {
+  try { const s = JSON.parse(localStorage.getItem(CREW_STORE_KEY)); if (Array.isArray(s)) return s; } catch {}
+  return null;
+}
+
+function saveCrew(crew) {
+  localStorage.setItem(CREW_STORE_KEY, JSON.stringify(crew));
+}
+
+function seedCrewIfEmpty() {
+  if (loadCrew() === null) saveCrew(SEED_CREW);
+}
+
+function openCrewModal() {
+  renderCrewList();
+  document.getElementById('crewModalOverlay').style.display = 'flex';
+}
+
+function closeCrewModal() {
+  document.getElementById('crewModalOverlay').style.display = 'none';
+}
+
+function renderCrewList() {
+  const crew = loadCrew() || [];
+  const container = document.getElementById('crewList');
+  if (crew.length === 0) {
+    container.innerHTML = '<div style="padding:1rem;text-align:center;color:var(--text-muted);font-size:0.8rem">No crew members yet. Add one below.</div>';
+    return;
+  }
+  container.innerHTML = crew.map((c, i) => `
+    <div class="crew-row">
+      <input type="text" placeholder="Name" value="${esc(c.name || '')}" oninput="updateCrewField(${i}, 'name', this.value)">
+      <input type="text" placeholder="Role" value="${esc(c.role || '')}" oninput="updateCrewField(${i}, 'role', this.value)">
+      <input type="text" placeholder="Strengths" value="${esc(c.strengths || '')}" oninput="updateCrewField(${i}, 'strengths', this.value)">
+      <input type="text" placeholder="Tools" value="${esc(c.tools || '')}" oninput="updateCrewField(${i}, 'tools', this.value)">
+      <input type="text" placeholder="Truck" value="${esc(c.truck || '')}" oninput="updateCrewField(${i}, 'truck', this.value)">
+      <label><input type="checkbox" ${c.canDrive ? 'checked' : ''} onchange="updateCrewField(${i}, 'canDrive', this.checked)">Drives</label>
+      <button class="crew-row-delete" onclick="deleteCrewMember(${i})">X</button>
+    </div>
+  `).join('');
+}
+
+function updateCrewField(index, field, value) {
+  const crew = loadCrew() || [];
+  if (!crew[index]) return;
+  crew[index][field] = value;
+  saveCrew(crew);
+}
+
+function addCrewMember() {
+  const crew = loadCrew() || [];
+  crew.push({ name: '', role: '', strengths: '', tools: '', truck: '', canDrive: false });
+  saveCrew(crew);
+  renderCrewList();
+}
+
+function deleteCrewMember(index) {
+  const crew = loadCrew() || [];
+  crew.splice(index, 1);
+  saveCrew(crew);
+  renderCrewList();
+}
+
+function loadDailyOverviews() {
+  try { return JSON.parse(localStorage.getItem(DAILY_OVERVIEW_STORE_KEY)) || {}; } catch { return {}; }
+}
+
+function saveDailyOverviews(map) {
+  localStorage.setItem(DAILY_OVERVIEW_STORE_KEY, JSON.stringify(map));
+}
+
+function renderDailyOverview() {
+  const dk = dateKey(today());
+  const overviews = loadDailyOverviews();
+  const textarea = document.getElementById('doTextarea');
+  const dateEl = document.getElementById('doDate');
+  if (dateEl) dateEl.textContent = today().toLocaleDateString('en-NZ', { weekday: 'long', day: 'numeric', month: 'long' });
+  if (textarea) textarea.value = overviews[dk] || '';
+}
+
+function onDailyOverviewInput() {
+  const dk = dateKey(today());
+  const overviews = loadDailyOverviews();
+  overviews[dk] = document.getElementById('doTextarea').value;
+  saveDailyOverviews(overviews);
+}
+
+function weatherCodeToSummary(code) {
+  if (code === 0) return 'Clear sky';
+  if (code >= 1 && code <= 3) return 'Partly cloudy';
+  if (code === 45 || code === 48) return 'Foggy';
+  if (code >= 51 && code <= 57) return 'Drizzle';
+  if (code >= 61 && code <= 67) return 'Rain';
+  if (code >= 71 && code <= 77) return 'Snow';
+  if (code >= 80 && code <= 82) return 'Rain showers';
+  if (code >= 95 && code <= 99) return 'Thunderstorm';
+  return 'Unknown';
+}
+
+async function fetchWeather() {
+  try {
+    const resp = await fetch('https://api.open-meteo.com/v1/forecast?latitude=-43.532&longitude=172.631&daily=temperature_2m_min,temperature_2m_max,precipitation_probability_max,weather_code&timezone=Pacific%2FAuckland&forecast_days=1');
+    const data = await resp.json();
+    if (!data.daily) return null;
+    return {
+      summary: weatherCodeToSummary(data.daily.weather_code[0]),
+      tempMin: Math.round(data.daily.temperature_2m_min[0]),
+      tempMax: Math.round(data.daily.temperature_2m_max[0]),
+      rainChance: data.daily.precipitation_probability_max[0] || 0
+    };
+  } catch { return null; }
+}
+
+function getTodayJobsContext() {
+  const dk = dateKey(today());
+  const todayEvents = state.events.filter(e => e.date === dk && e.type && e.type.startsWith('job'));
+  const jobGrid = loadJobGrid();
+  const geocodeCache = loadGeocodeCache();
+
+  return todayEvents.map(ev => {
+    const rawName = ev.title.replace(/\s*\(\d+(\.\d+)?hrs\)$/, '').trim();
+    const match = jobGrid.find(j => j.name === rawName);
+    const coords = geocodeCache[rawName.toLowerCase().trim()];
+    return {
+      name: rawName,
+      category: ev.jobCategory || (match && match.category) || '',
+      hours: match ? match.hours : 0,
+      description: ev.notes || (match && match.description) || '',
+      coords: coords || null
+    };
+  });
+}
+
+async function suggestDailyPlan() {
+  const btn = document.getElementById('doSuggestBtn');
+  const origText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Thinking...';
+
+  try {
+    const crew = loadCrew() || [];
+    const jobs = getTodayJobsContext();
+    const weather = await fetchWeather();
+    const date = today().toLocaleDateString('en-NZ', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
+    const resp = await fetch('/api/daily-plan', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ date, crew, jobs, weather })
+    });
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.error || 'Server error');
+
+    const box = document.getElementById('doSuggestion');
+    const body = document.getElementById('doSuggestionBody');
+    body.textContent = data.suggestion || '(No suggestion returned)';
+    box.classList.remove('hidden');
+  } catch (err) {
+    alert('Failed to get suggestion: ' + (err.message || 'Unknown error'));
+  } finally {
+    btn.disabled = false;
+    btn.textContent = origText;
+  }
+}
+
+function useSuggestion() {
+  const body = document.getElementById('doSuggestionBody');
+  const textarea = document.getElementById('doTextarea');
+  textarea.value = body.textContent;
+  onDailyOverviewInput();
+  dismissSuggestion();
+}
+
+function dismissSuggestion() {
+  document.getElementById('doSuggestion').classList.add('hidden');
+}
+
 // ---- Init ----
+seedCrewIfEmpty();
 renderGoals();
 renderTodos();
 renderDPTabs();
 renderDPTasks();
 initCal();
 initPhoto();
+renderDailyOverview();
 
 // Restore grid view if data exists
 if (loadJobGrid().length > 0) {
@@ -3686,6 +4095,18 @@ if (loadJobGrid().length > 0) {
     <div class="gm-actions">
       <button class="gm-cancel" onclick="closeJobModal()">Cancel</button>
       <button class="gm-save" onclick="saveJobDetails()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Crew Modal -->
+<div class="goal-modal-overlay" id="crewModalOverlay" style="display:none" onclick="if(event.target===this)closeCrewModal()">
+  <div class="goal-modal" style="width:720px;max-height:85vh;overflow-y:auto">
+    <h3 style="font-size:1rem;margin-bottom:1rem">Manage Crew</h3>
+    <div id="crewList"></div>
+    <button class="crew-add-btn" onclick="addCrewMember()">+ Add Crew Member</button>
+    <div class="gm-actions">
+      <button class="gm-save" onclick="closeCrewModal()">Done</button>
     </div>
   </div>
 </div>
