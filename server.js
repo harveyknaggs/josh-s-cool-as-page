@@ -66,7 +66,7 @@ app.post('/api/extract', async (req, res) => {
 });
 
 app.post('/api/daily-plan', async (req, res) => {
-  const { date, crew, jobs, weather } = req.body;
+  const { date, crew, jobs, weather, rules, examples } = req.body;
 
   if (!Array.isArray(crew) || !Array.isArray(jobs)) {
     return res.status(400).json({ error: 'crew and jobs must be arrays' });
@@ -97,7 +97,16 @@ app.post('/api/daily-plan', async (req, res) => {
     ? `${weather.summary || 'Unknown'}, ${weather.tempMin}-${weather.tempMax}°C, ${weather.rainChance}% rain chance`
     : 'Weather data unavailable';
 
-  const userPrompt = `You are helping Josh, a landscaping manager in Christchurch NZ, plan the crew's day. Write a concise daily overview (1-2 paragraphs) that will be shared with the team via Messenger.
+  const rulesSection = (rules && rules.trim())
+    ? `\n\nIMPORTANT RULES FROM JOSH (always follow these):\n${rules.trim()}`
+    : '';
+
+  const examplesSection = (Array.isArray(examples) && examples.length > 0)
+    ? `\n\nEXAMPLES OF PAST PLANS JOSH LIKED (match this tone and style):\n` +
+      examples.slice(-5).map((ex, i) => `--- Example ${i + 1} ---\n${ex}`).join('\n\n')
+    : '';
+
+  const userPrompt = `You are helping Josh, a landscaping manager in Christchurch NZ, plan the crew's day. Write a concise daily overview (1-2 paragraphs) that will be shared with the team via Messenger.${rulesSection}${examplesSection}
 
 TODAY: ${date}
 
@@ -114,7 +123,8 @@ Write a short, casual plan:
 - Assign crew based on strengths (hard landscaping -> Vili/Will, gardening -> Sam, complex -> Paul)
 - Make sure every team going to a job has at least one driver
 - Mention weather if it affects the work (rain -> reschedule outdoor prep, heat -> hydration)
-- Be practical and direct. Don't use bullet points, just flowing prose like Josh would write for his team on Messenger. Keep it under 200 words.`;
+- Be practical and direct. Don't use bullet points, just flowing prose like Josh would write for his team on Messenger. Keep it under 200 words.
+- Follow Josh's rules above strictly if any were given, and match the tone of his past plans if examples were given.`;
 
   try {
     const response = await client.messages.create({
