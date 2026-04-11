@@ -1093,6 +1093,62 @@
 
     .do-dismiss-btn:hover { background: #eef2ff; }
 
+    .do-save-btn {
+      padding: 0.25rem 0.6rem;
+      background: #fff;
+      color: #16a34a;
+      border: 1px solid #86efac;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .do-save-btn:hover { background: #dcfce7; }
+    .do-save-btn.saved { background: #dcfce7; color: #15803d; }
+
+    .ai-example-item {
+      padding: 0.5rem 0.75rem;
+      margin-bottom: 0.4rem;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.75rem;
+      line-height: 1.4;
+      display: flex;
+      gap: 0.5rem;
+      align-items: flex-start;
+    }
+
+    .ai-example-text {
+      flex: 1;
+      color: var(--text-secondary);
+      white-space: pre-wrap;
+      max-height: 80px;
+      overflow-y: auto;
+    }
+
+    .ai-example-delete {
+      padding: 0.2rem 0.4rem;
+      background: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+      border-radius: 4px;
+      font-size: 0.65rem;
+      cursor: pointer;
+      font-family: inherit;
+      flex-shrink: 0;
+    }
+
+    .ai-examples-empty {
+      padding: 0.75rem;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      font-style: italic;
+    }
+
     .do-suggestion-body {
       font-size: 0.85rem;
       line-height: 1.5;
@@ -2189,6 +2245,7 @@
         <div class="do-title">Daily Overview <span class="do-date" id="doDate"></span></div>
         <div class="do-actions">
           <button class="do-crew-btn" onclick="openCrewModal()">Manage Crew</button>
+          <button class="do-crew-btn" onclick="openTrainModal()">Train AI</button>
           <button class="do-suggest-btn" id="doSuggestBtn" onclick="suggestDailyPlan()">Suggest Plan</button>
         </div>
       </div>
@@ -2197,6 +2254,7 @@
         <div class="do-suggestion-header">
           <strong>AI Suggestion</strong>
           <div>
+            <button class="do-save-btn" id="doSaveExampleBtn" onclick="saveCurrentSuggestionAsExample()" title="Save as training example">&#128077; Save as example</button>
             <button class="do-use-btn" onclick="useSuggestion()">Use This</button>
             <button class="do-dismiss-btn" onclick="dismissSuggestion()">Dismiss</button>
           </div>
@@ -3797,6 +3855,9 @@ function toggleMapView() {
 // ---- Daily Overview + Crew ----
 const CREW_STORE_KEY = 'josh-crew';
 const DAILY_OVERVIEW_STORE_KEY = 'josh-daily-overview';
+const AI_RULES_STORE_KEY = 'josh-ai-rules';
+const AI_EXAMPLES_STORE_KEY = 'josh-ai-examples';
+let lastSuggestion = null;
 
 const SEED_CREW = [
   { name: 'Roy', role: 'Owner', strengths: 'Sales, quoting, client relationships, business operations, growth strategy', tools: '', truck: '', canDrive: true },
@@ -3955,19 +4016,29 @@ async function suggestDailyPlan() {
     const jobs = getTodayJobsContext();
     const weather = await fetchWeather();
     const date = today().toLocaleDateString('en-NZ', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    const rules = loadAIRules();
+    const examples = loadAIExamples();
 
     const resp = await fetch('/api/daily-plan', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ date, crew, jobs, weather })
+      body: JSON.stringify({ date, crew, jobs, weather, rules, examples })
     });
     const data = await resp.json();
     if (!resp.ok) throw new Error(data.error || 'Server error');
 
+    lastSuggestion = data.suggestion || '';
     const box = document.getElementById('doSuggestion');
     const body = document.getElementById('doSuggestionBody');
-    body.textContent = data.suggestion || '(No suggestion returned)';
+    body.textContent = lastSuggestion || '(No suggestion returned)';
     box.classList.remove('hidden');
+
+    // Reset save button state
+    const saveBtn = document.getElementById('doSaveExampleBtn');
+    if (saveBtn) {
+      saveBtn.classList.remove('saved');
+      saveBtn.textContent = '\u{1F44D} Save as example';
+    }
   } catch (err) {
     alert('Failed to get suggestion: ' + (err.message || 'Unknown error'));
   } finally {
@@ -3986,6 +4057,77 @@ function useSuggestion() {
 
 function dismissSuggestion() {
   document.getElementById('doSuggestion').classList.add('hidden');
+}
+
+// ---- AI Training ----
+function loadAIRules() {
+  return localStorage.getItem(AI_RULES_STORE_KEY) || '';
+}
+
+function saveAIRules(text) {
+  localStorage.setItem(AI_RULES_STORE_KEY, text || '');
+}
+
+function loadAIExamples() {
+  try { const s = JSON.parse(localStorage.getItem(AI_EXAMPLES_STORE_KEY)); if (Array.isArray(s)) return s; } catch {}
+  return [];
+}
+
+function saveAIExamples(examples) {
+  localStorage.setItem(AI_EXAMPLES_STORE_KEY, JSON.stringify(examples));
+}
+
+function openTrainModal() {
+  document.getElementById('aiRulesTextarea').value = loadAIRules();
+  renderAIExamplesList();
+  document.getElementById('trainModalOverlay').style.display = 'flex';
+}
+
+function closeTrainModal() {
+  document.getElementById('trainModalOverlay').style.display = 'none';
+}
+
+function saveTrainModal() {
+  const rules = document.getElementById('aiRulesTextarea').value;
+  saveAIRules(rules);
+  closeTrainModal();
+}
+
+function renderAIExamplesList() {
+  const examples = loadAIExamples();
+  const container = document.getElementById('aiExamplesList');
+  const count = document.getElementById('aiExampleCount');
+  count.textContent = examples.length;
+  if (examples.length === 0) {
+    container.innerHTML = '<div class="ai-examples-empty">No saved examples yet. Click &#128077; on any suggestion you like to save it here.</div>';
+    return;
+  }
+  container.innerHTML = examples.map((ex, i) =>
+    `<div class="ai-example-item">
+      <div class="ai-example-text">${esc(ex)}</div>
+      <button class="ai-example-delete" onclick="deleteAIExample(${i})">Delete</button>
+    </div>`
+  ).join('');
+}
+
+function deleteAIExample(index) {
+  const examples = loadAIExamples();
+  examples.splice(index, 1);
+  saveAIExamples(examples);
+  renderAIExamplesList();
+}
+
+function saveCurrentSuggestionAsExample() {
+  if (!lastSuggestion) return;
+  const examples = loadAIExamples();
+  if (examples.includes(lastSuggestion)) return; // already saved
+  examples.push(lastSuggestion);
+  // Keep only the most recent 10 to avoid token bloat
+  if (examples.length > 10) examples.splice(0, examples.length - 10);
+  saveAIExamples(examples);
+  const btn = document.getElementById('doSaveExampleBtn');
+  btn.classList.add('saved');
+  btn.textContent = '\u2713 Saved';
 }
 
 // ---- Init ----
@@ -4108,6 +4250,29 @@ if (loadJobGrid().length > 0) {
     <button class="crew-add-btn" onclick="addCrewMember()">+ Add Crew Member</button>
     <div class="gm-actions">
       <button class="gm-save" onclick="closeCrewModal()">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- Train AI Modal -->
+<div class="goal-modal-overlay" id="trainModalOverlay" style="display:none" onclick="if(event.target===this)closeTrainModal()">
+  <div class="goal-modal" style="width:640px;max-height:85vh;overflow-y:auto">
+    <h3 style="font-size:1rem;margin-bottom:0.5rem">Train AI</h3>
+    <p style="font-size:0.75rem;color:var(--text-muted);margin-bottom:1rem">
+      Add rules the AI should always follow, and save past plans you liked as examples.
+      Both get sent to Claude every time you click Suggest Plan, so it learns your style over time.
+    </p>
+    <div class="gm-field">
+      <label class="gm-label">Rules &amp; preferences (one per line)</label>
+      <textarea class="gm-textarea" id="aiRulesTextarea" rows="8" placeholder="e.g.&#10;Paul leads complex hardscaping jobs.&#10;Jordan and Gio usually work together.&#10;If rain is over 60%, reschedule soft landscaping to maintenance jobs.&#10;Always start with 'Gday team' and end with 'Cheers'.&#10;We have 2 trucks: Blue truck fits 3, White truck fits 2."></textarea>
+    </div>
+    <div class="gm-field">
+      <label class="gm-label">Saved examples (<span id="aiExampleCount">0</span>)</label>
+      <div id="aiExamplesList"></div>
+    </div>
+    <div class="gm-actions">
+      <button class="gm-cancel" onclick="closeTrainModal()">Cancel</button>
+      <button class="gm-save" onclick="saveTrainModal()">Save</button>
     </div>
   </div>
 </div>
