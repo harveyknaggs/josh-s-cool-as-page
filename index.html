@@ -122,7 +122,7 @@
 
     .top-panels {
       display: grid;
-      grid-template-columns: 380px 1fr;
+      grid-template-columns: 280px 1fr 280px;
       border-bottom: 1px solid var(--border);
     }
 
@@ -967,17 +967,19 @@
     /* ---- Daily Overview ---- */
     .daily-overview-panel {
       background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 1rem;
-      margin-bottom: 1rem;
-      box-shadow: var(--shadow);
+      padding: 1.25rem;
+      border-left: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
     }
 
     .do-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
       margin-bottom: 0.6rem;
     }
 
@@ -1028,6 +1030,7 @@
 
     .do-textarea {
       width: 100%;
+      flex: 1;
       min-height: 120px;
       padding: 0.75rem;
       border: 1px solid var(--border);
@@ -2172,6 +2175,26 @@
         <ul class="goals-list" id="goalsList"></ul>
         <div class="goals-add-btn"><button onclick="openGoalModal()" style="border:none;background:var(--green);color:#fff;padding:0.4rem 0.75rem;border-radius:6px;font-size:0.75rem;font-weight:600;cursor:pointer;font-family:inherit">+ Add Goal</button></div>
       </div>
+      <div class="daily-overview-panel">
+        <div class="do-header">
+          <div class="do-title">Daily Overview <span class="do-date" id="doDate"></span></div>
+          <div class="do-actions">
+            <button class="do-crew-btn" onclick="openCrewModal()">Manage Crew</button>
+            <button class="do-suggest-btn" id="doSuggestBtn" onclick="suggestDailyPlan()">Suggest Plan</button>
+          </div>
+        </div>
+        <textarea class="do-textarea" id="doTextarea" placeholder="Write today's plan for the team..." oninput="onDailyOverviewInput()"></textarea>
+        <div class="do-suggestion hidden" id="doSuggestion">
+          <div class="do-suggestion-header">
+            <strong>AI Suggestion</strong>
+            <div>
+              <button class="do-use-btn" onclick="useSuggestion()">Use This</button>
+              <button class="do-dismiss-btn" onclick="dismissSuggestion()">Dismiss</button>
+            </div>
+          </div>
+          <div class="do-suggestion-body" id="doSuggestionBody"></div>
+        </div>
+      </div>
       <div class="todo-panel">
         <div class="todo-title">To Do List</div>
         <div class="todo-items" id="todoItems"></div>
@@ -2198,28 +2221,6 @@
           <button class="close-btn" onclick="closeDayDetail()">&times;</button>
         </div>
         <div id="dayDetailList"></div>
-      </div>
-    </div>
-
-    <!-- Daily Overview -->
-    <div class="daily-overview-panel">
-      <div class="do-header">
-        <div class="do-title">Daily Overview <span class="do-date" id="doDate"></span></div>
-        <div class="do-actions">
-          <button class="do-crew-btn" onclick="openCrewModal()">Manage Crew</button>
-          <button class="do-suggest-btn" id="doSuggestBtn" onclick="suggestDailyPlan()">Suggest Plan</button>
-        </div>
-      </div>
-      <textarea class="do-textarea" id="doTextarea" placeholder="Write today's plan for the team..." oninput="onDailyOverviewInput()"></textarea>
-      <div class="do-suggestion hidden" id="doSuggestion">
-        <div class="do-suggestion-header">
-          <strong>AI Suggestion</strong>
-          <div>
-            <button class="do-use-btn" onclick="useSuggestion()">Use This</button>
-            <button class="do-dismiss-btn" onclick="dismissSuggestion()">Dismiss</button>
-          </div>
-        </div>
-        <div class="do-suggestion-body" id="doSuggestionBody"></div>
       </div>
     </div>
 
