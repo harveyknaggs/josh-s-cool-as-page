@@ -2182,24 +2182,6 @@
         <div class="todo-progress" id="todoProgress"></div>
       </div>
     </div>
-    <div class="calendar-panel">
-      <div class="cal-header">
-        <div class="cal-title" id="calTitle"></div>
-        <div class="cal-nav">
-          <button onclick="changeMonth(-1)">&#8249;</button>
-          <button onclick="goToday()" style="font-size:0.75rem;width:auto;padding:0 12px">Today</button>
-          <button onclick="changeMonth(1)">&#8250;</button>
-        </div>
-      </div>
-      <div class="cal-grid" id="calGrid"></div>
-      <div class="day-detail" id="dayDetail">
-        <div class="day-detail-header">
-          <div class="day-detail-title" id="dayDetailTitle"></div>
-          <button class="close-btn" onclick="closeDayDetail()">&times;</button>
-        </div>
-        <div id="dayDetailList"></div>
-      </div>
-    </div>
 
     <!-- Daily Overview -->
     <div class="daily-overview-panel">
@@ -2220,6 +2202,25 @@
           </div>
         </div>
         <div class="do-suggestion-body" id="doSuggestionBody"></div>
+      </div>
+    </div>
+
+    <div class="calendar-panel">
+      <div class="cal-header">
+        <div class="cal-title" id="calTitle"></div>
+        <div class="cal-nav">
+          <button onclick="changeMonth(-1)">&#8249;</button>
+          <button onclick="goToday()" style="font-size:0.75rem;width:auto;padding:0 12px">Today</button>
+          <button onclick="changeMonth(1)">&#8250;</button>
+        </div>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+      <div class="day-detail" id="dayDetail">
+        <div class="day-detail-header">
+          <div class="day-detail-title" id="dayDetailTitle"></div>
+          <button class="close-btn" onclick="closeDayDetail()">&times;</button>
+        </div>
+        <div id="dayDetailList"></div>
       </div>
     </div>
 
