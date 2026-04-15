@@ -827,11 +827,98 @@
       box-shadow: var(--shadow);
       transition: box-shadow 0.15s, opacity 0.15s;
       user-select: none;
+      position: relative;
     }
 
     .jg-card:hover { box-shadow: var(--shadow-lg); }
+    .jg-card:hover .jg-card-complete { opacity: 1; }
     .jg-card:active { cursor: grabbing; }
     .jg-card.dragging { opacity: 0.4; }
+
+    .jg-card-complete {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #fff;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      padding: 0;
+      opacity: 0;
+      transition: opacity 0.15s, background 0.15s, color 0.15s;
+      font-family: inherit;
+    }
+
+    .jg-card-complete:hover {
+      background: #16a34a;
+      color: #fff;
+      border-color: #16a34a;
+      opacity: 1;
+    }
+
+    .jg-card.completed {
+      opacity: 0.7;
+      cursor: default;
+    }
+
+    .jg-card.completed .jg-card-name { text-decoration: line-through; color: var(--text-muted); }
+    .jg-card.completed:active { cursor: default; }
+
+    .jg-card-completed-at {
+      font-size: 0.6rem;
+      color: var(--text-muted);
+      margin-top: 0.3rem;
+      font-style: italic;
+    }
+
+    .jg-card-completed-actions {
+      display: flex;
+      gap: 0.3rem;
+      margin-top: 0.4rem;
+    }
+
+    .jg-card-restore-btn {
+      padding: 0.2rem 0.5rem;
+      background: #dbeafe;
+      color: #1e40af;
+      border: 1px solid #93c5fd;
+      border-radius: 4px;
+      font-size: 0.65rem;
+      cursor: pointer;
+      font-family: inherit;
+      font-weight: 600;
+    }
+
+    .jg-card-restore-btn:hover { background: #bfdbfe; }
+
+    .jg-card-delete-btn {
+      padding: 0.2rem 0.5rem;
+      background: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+      border-radius: 4px;
+      font-size: 0.65rem;
+      cursor: pointer;
+      font-family: inherit;
+      font-weight: 600;
+    }
+
+    .jg-card-delete-btn:hover { background: #fecaca; }
+
+    .jg-completed-empty {
+      padding: 2rem;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
     .jg-card.drag-over { border-top: 2px solid var(--green); }
 
     .jg-card--presale-maint { border-left-color: #2563eb; }
@@ -2297,6 +2384,7 @@
           <span id="gridViewBtns" style="display:none">
             <button class="jg-back-btn" onclick="backToPhoto()">Back to Photo</button>
             <button class="jg-confirm-btn" id="mapToggleBtn" onclick="toggleMapView()">Show Map</button>
+            <button class="jg-back-btn" id="completedToggleBtn" onclick="toggleCompletedView()">Show Completed</button>
           </span>
         </div>
       </div>
@@ -3409,6 +3497,8 @@ function initPhoto() {
 
 // ---- Job Grid ----
 const JOB_GRID_STORE_KEY = 'josh-job-grid';
+const COMPLETED_JOBS_STORE_KEY = 'josh-completed-jobs';
+let completedViewVisible = false;
 const CATEGORY_CSS_CLASS = {
   'Pre-Sale Maintenance': 'jg-card--presale-maint',
   'Pre-Sale Tidys': 'jg-card--presale-tidy',
@@ -3442,6 +3532,104 @@ function saveJobGrid(jobs) {
   localStorage.setItem(JOB_GRID_STORE_KEY, JSON.stringify(jobs));
 }
 
+// Completed jobs
+function loadCompletedJobs() {
+  try { const s = JSON.parse(localStorage.getItem(COMPLETED_JOBS_STORE_KEY)); if (Array.isArray(s)) return s; } catch {}
+  return [];
+}
+
+function saveCompletedJobs(jobs) {
+  localStorage.setItem(COMPLETED_JOBS_STORE_KEY, JSON.stringify(jobs));
+}
+
+function completeJob(index) {
+  const jobs = loadJobGrid();
+  const job = jobs[index];
+  if (!job) return;
+  const completed = loadCompletedJobs();
+  completed.unshift({ ...job, completedAt: Date.now() });
+  saveCompletedJobs(completed);
+  jobs.splice(index, 1);
+  saveJobGrid(jobs);
+  renderJobGrid();
+  if (completedViewVisible) renderCompletedJobs();
+}
+
+function restoreCompletedJob(index) {
+  const completed = loadCompletedJobs();
+  const job = completed[index];
+  if (!job) return;
+  const jobs = loadJobGrid();
+  const { completedAt, ...rest } = job;
+  jobs.push(rest);
+  saveJobGrid(jobs);
+  completed.splice(index, 1);
+  saveCompletedJobs(completed);
+  renderCompletedJobs();
+}
+
+function deleteCompletedJob(index) {
+  if (!confirm('Delete this completed job forever?')) return;
+  const completed = loadCompletedJobs();
+  completed.splice(index, 1);
+  saveCompletedJobs(completed);
+  renderCompletedJobs();
+}
+
+function toggleCompletedView() {
+  const gridEl = document.getElementById('jobGridContainer');
+  const btn = document.getElementById('completedToggleBtn');
+  completedViewVisible = !completedViewVisible;
+  if (completedViewVisible) {
+    btn.textContent = 'Show Active';
+    renderCompletedJobs();
+  } else {
+    btn.textContent = 'Show Completed';
+    renderJobGrid();
+  }
+}
+
+function renderCompletedJobs() {
+  const container = document.getElementById('jobGridContainer');
+  const completed = loadCompletedJobs();
+
+  if (completed.length === 0) {
+    container.innerHTML = '<div class="jg-completed-empty">No completed jobs yet. Tick the <span style="display:inline-block;width:16px;height:16px;border-radius:50%;background:#16a34a;color:#fff;text-align:center;line-height:16px;font-size:0.7rem">&#10003;</span> on any active job card to move it here.</div>';
+    return;
+  }
+
+  let html = '';
+  JOB_CATEGORIES.forEach(cat => {
+    const catJobs = completed.map((job, i) => ({ ...job, _i: i })).filter(j => j.category === cat);
+    if (catJobs.length === 0) return;
+
+    const headerClass = CATEGORY_HEADER_CLASS[cat] || '';
+    html += `<div class="jg-section">
+      <div class="jg-section-header ${headerClass}">${esc(cat)} (${catJobs.length})</div>
+      <div class="jg-section-grid">`;
+
+    catJobs.forEach(job => {
+      const i = job._i;
+      const cssClass = CATEGORY_CSS_CLASS[job.category] || '';
+      const completedDate = new Date(job.completedAt).toLocaleDateString('en-NZ', { weekday: 'short', day: 'numeric', month: 'short' });
+      html += `<div class="jg-card ${cssClass} completed">
+        <div class="jg-card-name">${esc(job.name)}</div>
+        <div class="jg-card-hours">${job.hours ? job.hours + ' hrs' : ''}</div>
+        ${job.description ? `<div class="jg-card-desc">${esc(job.description)}</div>` : ''}
+        <div class="jg-card-completed-at">Completed ${completedDate}</div>
+        <div class="jg-card-completed-actions">
+          <button class="jg-card-restore-btn" onclick="restoreCompletedJob(${i})">Restore</button>
+          <button class="jg-card-delete-btn" onclick="deleteCompletedJob(${i})">Delete</button>
+        </div>
+      </div>`;
+    });
+
+    html += `</div></div>`;
+  });
+
+  container.innerHTML = html;
+}
+
 function confirmJobs() {
   const extracted = loadExtractedJobs();
   const jobs = [];
@@ -3467,6 +3655,12 @@ function backToPhoto() {
   document.getElementById('jobGridContainer').classList.add('hidden');
   document.getElementById('photoViewBtns').style.display = 'inline';
   document.getElementById('gridViewBtns').style.display = 'none';
+  // Reset completed view state
+  if (completedViewVisible) {
+    completedViewVisible = false;
+    const btn = document.getElementById('completedToggleBtn');
+    if (btn) btn.textContent = 'Show Completed';
+  }
 }
 
 function renderJobGrid() {
@@ -3498,6 +3692,7 @@ function renderJobGrid() {
         ondragover="jgDragOverCard(event)"
         ondragleave="jgDragLeaveCard(event)"
         ondrop="jgDropOnCard(event, ${i})">
+        <button class="jg-card-complete" onclick="event.stopPropagation(); completeJob(${i})" title="Mark complete">&#10003;</button>
         <div class="jg-card-name">${esc(job.name)}</div>
         <div class="jg-card-hours">${job.hours ? job.hours + ' hrs' : 'No hours set'}</div>
         <div class="jg-card-desc">${job.description ? esc(job.description) : 'Click to add details'}</div>
