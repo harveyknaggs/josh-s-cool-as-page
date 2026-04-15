@@ -3551,6 +3551,15 @@ function completeJob(index) {
   saveCompletedJobs(completed);
   jobs.splice(index, 1);
   saveJobGrid(jobs);
+
+  // Also remove from extracted jobs (photo page) if present
+  const extracted = loadExtractedJobs();
+  if (extracted[job.category]) {
+    extracted[job.category] = extracted[job.category].filter(n => n !== job.name);
+    saveExtractedJobs(extracted);
+    renderExtractedJobs();
+  }
+
   renderJobGrid();
   if (completedViewVisible) renderCompletedJobs();
 }
@@ -3565,6 +3574,16 @@ function restoreCompletedJob(index) {
   saveJobGrid(jobs);
   completed.splice(index, 1);
   saveCompletedJobs(completed);
+
+  // Also restore to extracted jobs if not already there
+  const extracted = loadExtractedJobs();
+  if (!extracted[rest.category]) extracted[rest.category] = [];
+  if (!extracted[rest.category].includes(rest.name)) {
+    extracted[rest.category].push(rest.name);
+    saveExtractedJobs(extracted);
+    renderExtractedJobs();
+  }
+
   renderCompletedJobs();
 }
 
